@@ -5,6 +5,7 @@ com/enterprise/common/exception/GlobalExceptionHandler.class
 com/enterprise/common/security/JwtAuthenticationFilter.class
 com/enterprise/common/util/EncryptUtil.class
 com/enterprise/common/feature/ConditionalOnModule.class
+com/enterprise/common/util/MoneyUtil.class
 com/enterprise/common/entity/BaseEntity.class
 com/enterprise/common/util/StringUtil.class
 com/enterprise/common/annotation/Auditable.class

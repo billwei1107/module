@@ -1,4 +1,5 @@
 com/enterprise/common/util/DateUtilTest.class
+com/enterprise/common/util/MoneyUtilTest.class
 com/enterprise/common/dto/ApiResponseTest.class
 com/enterprise/common/security/JwtTokenProviderTest.class
 com/enterprise/common/util/EncryptUtilTest.class
