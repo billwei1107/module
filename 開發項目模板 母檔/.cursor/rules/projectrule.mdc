@@ -1,0 +1,53 @@
+---
+description: 專案管理協作平台 (ERP) 專案專屬規則
+globs: 
+alwaysApply: true
+---
+
+# 專案管理協作平台 (ERP Project Rules)
+
+本文件補充全局規範 (mainrule)，定義本專案特有的技術與邏輯規範。
+
+## 1. 核心技術棧 (Tech Stack)
+
+*   **後端 (Backend)**: Spring Boot 3.x (Java 21)
+    *   **ORM**: JPA / Hibernate
+    *   **排程**: Quartz (用於死線追蹤、預算警示)
+*   **前端 (Web)**: React + Vite + TypeScript
+    *   **UI**: Material-UI (MUI)
+    *   **State**: Zustand
+*   **行動端 (Mobile)**: Flutter
+*   **資料庫**: PostgreSQL (主要), Redis (快取)
+
+## 2. 功能模組規範 (Module Specs)
+
+### 2.1 業務流程 (Service Flow)
+*   所有訂單狀態變更 (Contact -> Quote -> Contract -> Order) 必須寫入 `AuditLog`。
+*   報價單生成必須支援 "含稅/未稅" 切換邏輯。
+
+### 2.2 專案模板 (Project Scaffolding)
+*   CLI 工具生成的專案必須通過 ESLint 與 SonarQube 基本檢查。
+
+### 2.3 會議自動化
+*   音訊上傳限制：最大 50MB，長度不超過 2 小時。
+*   轉錄後必須自動提取 Action Items。
+
+## 3. 目錄結構 (Directory Structure)
+
+```text
+/
+├── backend/            # Spring Boot Project
+├── frontend-web/       # React Project
+├── frontend-app/       # Flutter Project
+├── docker/             # Docker Config
+└── docs/               # Documentation
+```
+
+## 4. 特殊編碼規範 (Specific Coding Rules)
+
+*   **Financial Service**: 
+    *   所有金額運算必須使用 `BigDecimal`，嚴禁使用 `double`。
+    *   金額欄位在 DB 中統一存為 `DECIMAL(19, 4)`。
+*   **Date/Time**:
+    *   後端統一使用 UTC (`Instant`) 儲存。
+    *   前端顯示時轉換為使用者當地時間。
