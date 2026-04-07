@@ -14,12 +14,13 @@ export const RolePermissionTree = () => {
     useEffect(() => {
         const fetchRoles = async () => {
             try {
-                const res = await axiosInstance.get('/api/v1/roles');
-                if (res.data && res.data.data) {
-                    setRoles(Array.isArray(res.data.data) ? res.data.data : res.data.data.content || []);
+                const res = await axiosInstance.get('/v1/roles');
+                if (res && (res as any).data) {
+                    const payload = (res as any).data;
+                    setRoles(Array.isArray(payload) ? payload : payload.content || []);
                 }
-            } catch (e) {
-                console.error(e);
+            } catch (error) {
+                console.error(error);
             } finally {
                 setLoading(false);
             }

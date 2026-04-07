@@ -14,10 +14,10 @@ export const UserTable = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const res = await axiosInstance.get('/api/v1/users');
-                if (res.data && res.data.data) {
-                    // API returns list of users or page
-                    setUsers(Array.isArray(res.data.data) ? res.data.data : res.data.data.content || []);
+                const res = await axiosInstance.get('/v1/users');
+                if (res && (res as any).data) {
+                    const payload = (res as any).data;
+                    setUsers(Array.isArray(payload) ? payload : payload.content || []);
                 }
             } catch (err) {
                 console.error("Failed to fetch users", err);

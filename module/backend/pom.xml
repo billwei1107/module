@@ -26,6 +26,7 @@
         <module>module-common</module>
         <module>module-auth</module>
         <module>module-organization</module>
+        <module>module-workflow</module>
         <module>app</module>
     </modules>
 

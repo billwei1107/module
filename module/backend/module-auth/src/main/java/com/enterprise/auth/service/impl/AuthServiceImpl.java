@@ -21,7 +21,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
 
-    public AuthServiceImpl(UserRepository userRepository, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder, UserService userService) {
+    public AuthServiceImpl(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
+            PasswordEncoder passwordEncoder, UserService userService) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
@@ -48,7 +49,6 @@ public class AuthServiceImpl implements AuthService {
 
         userService.handleLoginSuccess(user);
 
-        // TODO: Get actual roles
         String token = jwtTokenProvider.generateToken(user.getId(), "USER");
 
         return LoginResponse.builder()

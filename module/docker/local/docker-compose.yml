@@ -33,6 +33,11 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-backend
     env_file:
       - ../../env/local/.env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      - POSTGRES_PORT=5432
+      - REDIS_PORT=6379
     ports:
       - "38080:8080"
     depends_on:

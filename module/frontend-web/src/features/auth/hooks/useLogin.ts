@@ -15,8 +15,8 @@ export const useLogin = () => {
         setError(null);
         try {
             const response = await loginApi(data);
-            setAuth(response.token, response.userId, response.username);
-            navigate('/');
+            setAuth({ id: response.userId, username: response.username }, response.token);
+            navigate('/department'); // 跳轉到組織管理做為預設頁
         } catch (err: any) {
             setError(err.response?.data?.message || 'Login failed');
             throw err;

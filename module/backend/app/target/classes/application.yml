@@ -29,7 +29,7 @@ jwt:
 modules:
   auth: true
   organization: true
-  workflow: false
+  workflow: true
   notification: false
   attendance: false
   leave: false
