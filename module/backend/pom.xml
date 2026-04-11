@@ -27,6 +27,8 @@
         <module>module-auth</module>
         <module>module-organization</module>
         <module>module-workflow</module>
+        <module>module-notification</module>
+        <module>module-attendance</module>
         <module>app</module>
     </modules>
 

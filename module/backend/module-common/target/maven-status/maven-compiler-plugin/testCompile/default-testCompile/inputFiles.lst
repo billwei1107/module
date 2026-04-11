@@ -1,6 +1,0 @@
-/usr/src/mymaven/module-common/src/test/java/com/enterprise/common/util/EncryptUtilTest.java
-/usr/src/mymaven/module-common/src/test/java/com/enterprise/common/security/JwtTokenProviderTest.java
-/usr/src/mymaven/module-common/src/test/java/com/enterprise/common/dto/ApiResponseTest.java
-/usr/src/mymaven/module-common/src/test/java/com/enterprise/common/util/MoneyUtilTest.java
-/usr/src/mymaven/module-common/src/test/java/com/enterprise/common/util/DateUtilTest.java
-/usr/src/mymaven/module-common/src/test/java/com/enterprise/common/exception/GlobalExceptionHandlerTest.java

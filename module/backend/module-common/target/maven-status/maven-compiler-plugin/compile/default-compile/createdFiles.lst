@@ -11,7 +11,9 @@ com/enterprise/common/util/StringUtil.class
 com/enterprise/common/annotation/Auditable.class
 com/enterprise/common/annotation/RequirePermission.class
 com/enterprise/common/dto/PageResponse.class
+com/enterprise/common/security/SecurityUtils.class
 com/enterprise/common/exception/ResourceNotFoundException.class
 com/enterprise/common/dto/ApiResponse.class
 com/enterprise/common/feature/ModuleCondition.class
+com/enterprise/common/event/SystemNotificationEvent.class
 com/enterprise/common/util/DateUtil.class

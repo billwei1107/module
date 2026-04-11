@@ -12,6 +12,7 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    locations: classpath:db/migration,classpath:db/migration/organization,classpath:db/migration/workflow
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -34,3 +35,14 @@ modules:
   attendance: false
   leave: false
   finance: false
+
+pos:
+  auth:
+    pin-login: true
+    quick-switch: true
+    auto-lock-minutes: 5
+    manager-override: true
+  organization:
+    multi-region: true
+    multi-store: true
+    terminal-monitor: true

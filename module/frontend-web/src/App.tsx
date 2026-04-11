@@ -14,6 +14,7 @@ import { EmployeeListPage } from './features/organization/pages/EmployeeListPage
 // 引入 workflow 頁面
 import { DefinitionListPage } from './features/workflow/pages/DefinitionListPage';
 import { MyTasksPage } from './features/workflow/pages/MyTasksPage';
+import { NotificationBell } from './features/notification/components/NotificationBell';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -22,6 +23,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           模塊化企業系統
         </Typography>
+        <NotificationBell />
         <Button color="inherit" component={Link} to="/department">組織管理</Button>
         <Button color="inherit" component={Link} to="/employee">員工管理</Button>
         <Button color="inherit" component={Link} to="/workflow">發起簽核</Button>
