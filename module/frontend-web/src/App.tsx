@@ -16,6 +16,12 @@ import { DefinitionListPage } from './features/workflow/pages/DefinitionListPage
 import { MyTasksPage } from './features/workflow/pages/MyTasksPage';
 import { NotificationBell } from './features/notification/components/NotificationBell';
 
+// 引入 attendance 頁面
+import { ClockInPage } from './features/attendance/pages/ClockInPage';
+import { AttendanceRecordsPage } from './features/attendance/pages/AttendanceRecordsPage';
+import { ShiftManagementPage } from './features/attendance/pages/ShiftManagementPage';
+import { AttendanceReportPage } from './features/attendance/pages/AttendanceReportPage';
+
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
     <AppBar position="static">
@@ -28,6 +34,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
         <Button color="inherit" component={Link} to="/employee">員工管理</Button>
         <Button color="inherit" component={Link} to="/workflow">發起簽核</Button>
         <Button color="inherit" component={Link} to="/my-tasks">我的待辦</Button>
+        <Button color="inherit" component={Link} to="/attendance/clock-in">打卡</Button>
+        <Button color="inherit" component={Link} to="/attendance/records">出勤記錄</Button>
         <Button color="inherit" component={Link} to="/login">登出</Button>
       </Toolbar>
     </AppBar>
@@ -53,6 +61,10 @@ function App() {
           <Route path="/employee" element={<AppLayout><EmployeeListPage /></AppLayout>} />
           <Route path="/workflow" element={<AppLayout><DefinitionListPage /></AppLayout>} />
           <Route path="/my-tasks" element={<AppLayout><MyTasksPage /></AppLayout>} />
+          <Route path="/attendance/clock-in" element={<AppLayout><ClockInPage /></AppLayout>} />
+          <Route path="/attendance/records" element={<AppLayout><AttendanceRecordsPage /></AppLayout>} />
+          <Route path="/attendance/shifts" element={<AppLayout><ShiftManagementPage /></AppLayout>} />
+          <Route path="/attendance/report" element={<AppLayout><AttendanceReportPage /></AppLayout>} />
 
           {/* 預設導向登入頁面 */}
           <Route path="/" element={<Navigate to="/department" replace />} />
