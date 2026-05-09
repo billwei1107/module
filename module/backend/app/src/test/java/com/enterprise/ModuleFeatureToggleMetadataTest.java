@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,6 +57,9 @@ class ModuleFeatureToggleMetadataTest {
             new ModuleConfig("inventory", InventoryModuleConfig.class),
             new ModuleConfig("meeting", MeetingModuleConfig.class),
             new ModuleConfig("announcement", AnnouncementModuleConfig.class));
+
+    private static final List<String> PROFILE_NAMES = List.of(
+            "cafe", "chain-hq", "fastfood", "restaurant", "retail");
 
     @Test
     void moduleConfigsShouldDeclareMatchingFeatureToggleProperties() {
@@ -91,6 +96,39 @@ class ModuleFeatureToggleMetadataTest {
         assertThat(scanPackages).doesNotContain("com.enterprise");
     }
 
+    @Test
+    void applicationProfilesShouldDeclareEveryModuleToggle() {
+        PROFILE_NAMES.forEach(profileName -> {
+            String modulesBlock = readModulesBlock("application-" + profileName + ".yml");
+            MODULE_CONFIGS.forEach(moduleConfig ->
+                    assertThat(modulesBlock)
+                            .as("%s profile must explicitly declare modules.%s",
+                                    profileName, moduleConfig.moduleName())
+                            .contains("\n  " + moduleConfig.moduleName() + ":"));
+        });
+    }
+
+    @Test
+    void applicationProfilesShouldKeepDependentModulesEnabledTogether() {
+        PROFILE_NAMES.forEach(profileName -> {
+            Map<String, Boolean> toggles = readProfileToggles(profileName);
+            if (Boolean.TRUE.equals(toggles.get("leave"))) {
+                assertEnabled(toggles, profileName, "workflow", "leave requires workflow");
+            }
+            if (Boolean.TRUE.equals(toggles.get("finance"))) {
+                assertEnabled(toggles, profileName, "workflow", "finance expense flow requires workflow");
+            }
+            if (Boolean.TRUE.equals(toggles.get("payroll"))) {
+                assertEnabled(toggles, profileName, "attendance", "payroll requires attendance");
+                assertEnabled(toggles, profileName, "leave", "payroll requires leave");
+                assertEnabled(toggles, profileName, "finance", "payroll requires finance");
+            }
+            if (Boolean.TRUE.equals(toggles.get("meeting"))) {
+                assertEnabled(toggles, profileName, "notification", "meeting invitations require notification");
+            }
+        });
+    }
+
     private static String propertyName(ConditionalOnProperty condition) {
         String prefix = condition.prefix();
         String name = condition.name().length > 0 ? condition.name()[0] : condition.value()[0];
@@ -98,9 +136,43 @@ class ModuleFeatureToggleMetadataTest {
     }
 
     private static String readApplicationYaml() {
-        try (var stream = ModuleFeatureToggleMetadataTest.class.getResourceAsStream("/application.yml")) {
+        return readResource("/application.yml");
+    }
+
+    private static String readModulesBlock(String resourceName) {
+        String yaml = readResource("/" + resourceName);
+        int modulesStart = yaml.indexOf("\nmodules:");
+        if (modulesStart < 0 && yaml.startsWith("modules:")) {
+            modulesStart = 0;
+        }
+        assertThat(modulesStart).as("%s must contain modules block", resourceName).isGreaterThanOrEqualTo(0);
+        int nextTopLevelBlock = yaml.indexOf("\npos:", modulesStart);
+        assertThat(nextTopLevelBlock).as("%s must contain pos block after modules", resourceName).isGreaterThan(modulesStart);
+        return yaml.substring(modulesStart, nextTopLevelBlock);
+    }
+
+    private static Map<String, Boolean> readProfileToggles(String profileName) {
+        Map<String, Boolean> toggles = new LinkedHashMap<>();
+        readModulesBlock("application-" + profileName + ".yml")
+                .lines()
+                .filter(line -> line.startsWith("  "))
+                .forEach(line -> {
+                    String[] parts = line.trim().split(":\\s*", 2);
+                    toggles.put(parts[0], Boolean.parseBoolean(parts[1]));
+                });
+        return toggles;
+    }
+
+    private static void assertEnabled(Map<String, Boolean> toggles, String profileName, String moduleName, String reason) {
+        assertThat(toggles.get(moduleName))
+                .as("%s profile must enable modules.%s because %s", profileName, moduleName, reason)
+                .isTrue();
+    }
+
+    private static String readResource(String resourcePath) {
+        try (var stream = ModuleFeatureToggleMetadataTest.class.getResourceAsStream(resourcePath)) {
             if (stream == null) {
-                throw new IllegalStateException("application.yml not found");
+                throw new IllegalStateException(resourcePath + " not found");
             }
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException exception) {

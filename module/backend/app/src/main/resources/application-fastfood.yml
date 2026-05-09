@@ -9,6 +9,18 @@ modules:
   workflow: false
   notification: true
   attendance: false
+  leave: false
+  system: true
+  audit: true
+  finance: false
+  payroll: false
+  project: false
+  document: false
+  report: true
+  crm: false
+  inventory: true
+  meeting: false
+  announcement: true
 
 pos:
   auth:
