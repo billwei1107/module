@@ -73,3 +73,11 @@
 **原因分析**: `confirm()` 會先呼叫 `markRead()`，而 `markRead()` 回傳 DTO 時會先查詢一次 confirmation 狀態，導致 Mockito 連續回傳序列被提前消耗；Maven 標準 lifecycle phase 使用 kebab-case，正確名稱為 `test-compile`。
 **Solution**: 將 confirmation repository mock 回傳序列調整為 `Optional.empty(), Optional.empty(), Optional.of(...)`，並改用 `mvn ... test-compile` 查編譯。修正後 `mvn clean test -pl module-announcement -am` 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-announcement-test-mock-sequence.md`
+
+## 2026-05-09 - Spring Boot 全域掃描繞過 Feature Toggle
+
+### 問題: `scanBasePackages = "com.enterprise"` 直接掃入已關閉模組元件
+**Issue**: 第四階段完成驗收時檢查 Feature Toggle，發現 `Application` 使用 `@SpringBootApplication(scanBasePackages = "com.enterprise")`，即使各模組 `ModuleConfig` 有 `@ConditionalOnProperty`，Controller/Service 仍可能因全域 component scan 被直接載入；同時 `module-attendance`、`module-notification` 缺少模組開關條件。
+**原因分析**: 模組配置類上的條件只控制該配置類是否生效，但 app 的全域掃描已經覆蓋所有 `com.enterprise.*` package，會繞過 `ModuleConfig` 的 gating。`notification` 的 `WebSocketConfig` 也獨立位於 config package，需跟隨模組開關。
+**Solution**: 將 `Application` 掃描範圍縮小為 `com.enterprise.common` 與各模組 `config` package；由每個 `ModuleConfig` 在模組啟用時自行 `@ComponentScan` 模組 package。補上 `AttendanceModuleConfig`、`NotificationModuleConfig`、`WebSocketConfig` 的 `@ConditionalOnProperty`，並替 `WorkflowModuleConfig` 補 `@ComponentScan`。新增 `ModuleFeatureToggleMetadataTest` 鎖定掃描邊界與 `modules.*` 開關元資料。修正後 `mvn test -pl app -am` 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-spring-global-scan-bypasses-feature-toggle.md`
