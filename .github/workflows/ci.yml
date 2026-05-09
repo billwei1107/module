@@ -56,6 +56,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+
       - name: Run ESLint
         run: npm run lint -- --max-warnings=0
 
@@ -128,7 +131,11 @@ jobs:
           from pathlib import Path
 
           manifest = json.loads(Path("/tmp/module-export.json").read_text())
-          assert manifest["schemaVersion"] == "1.0"
+          assert manifest["schemaVersion"] == "1.1"
+          assert manifest["generatedAt"].endswith("Z")
+          assert manifest["source"]["branch"]
+          assert manifest["source"]["commit"]
+          assert isinstance(manifest["source"]["dirty"], bool)
           assert manifest["requestedModules"] == ["payroll"]
           assert manifest["requiredModules"] == ["auth", "organization", "attendance", "workflow", "leave", "finance", "payroll"]
           assert "module/backend/module-payroll" in manifest["backendModules"]
@@ -164,6 +171,19 @@ jobs:
           test -d /tmp/module-export-copy/module/backend/module-crm
           test -d /tmp/module-export-copy/module/backend/module-auth
           test -d /tmp/module-export-copy/module/frontend-web/src/features/crm
+          test -f /tmp/module-export-copy/module/module-bundle-manifest.json
+          test -f /tmp/module-export-copy/module/MODULE_BUNDLE.md
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path("/tmp/module-export-copy/module/module-bundle-manifest.json").read_text())
+          assert manifest["schemaVersion"] == "1.1"
+          assert manifest["requestedModules"] == ["crm"]
+          assert manifest["requiredModules"] == ["auth", "organization", "crm"]
+          assert manifest["source"]["commit"]
+          assert manifest["source"]["shortCommit"]
+          PY
 
       - name: Validate portable import builds
         run: |
@@ -191,12 +211,18 @@ jobs:
         run: |
           test -f docs/module-portability-guide.md
           test -f docs/module-catalog.md
+          test -f docs/module-release-guide.md
+          test -f CHANGELOG.md
           grep -q "scripts/module-export.sh --modules payroll --format json" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --all --format markdown" docs/module-portability-guide.md
+          grep -q "module/module-bundle-manifest.json" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --format config" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --target /path/to/target-project --execute" docs/module-portability-guide.md
           grep -q "mvn -f module/backend/pom.xml test" docs/module-portability-guide.md
           grep -q "npm ci && npm run build" docs/module-portability-guide.md
+          grep -q "module-vYYYY.MM.DD.N" docs/module-release-guide.md
+          grep -q "source.shortCommit" docs/module-release-guide.md
+          grep -q "module-bundle-manifest.json" CHANGELOG.md
 
   docker-build:
     name: Docker Build

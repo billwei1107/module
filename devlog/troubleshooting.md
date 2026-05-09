@@ -150,3 +150,11 @@
 **Issue**: 執行 `scripts/module-export.sh --modules crm --target /tmp/module-import-crm-smoke --execute` 後，`mvn -f /tmp/module-import-crm-smoke/module/backend/pom.xml test` 起初失敗，錯誤包含 `Child module ... module-workflow ... does not exist`；修正父 POM 後又因 app 舊 `target/test-classes` 引用未匯出的模組而出現 `NoClassDefFoundError: com/enterprise/workflow/...`；前端 `npm run build` 起初也因缺少 `index.html` 顯示 `Cannot resolve entry module index.html`。
 **原因分析**: 匯出工具早期只複製母體整合檔，父 POM、app POM、`Application.java`、`application.yml`、前端 `App.tsx` 仍以全模組母體為假設，不適合只匯出部分模組。`rsync -a` 也會把母體既有 `target/`, `node_modules/`, `dist/` 等 build 產物一起帶到目標端，造成 Maven 使用過期 test-classes。前端支援檔清單漏列 Vite 根入口 `frontend-web/index.html` 與 public assets。
 **Solution**: `--execute` 改為輸出 portable bundle：排除 `target`, `node_modules`, `dist`，並重寫目標端 `module/backend/pom.xml`、`app/pom.xml`、`Application.java`、`application.yml`、`frontend-web/src/App.tsx`、`moduleNavigation.ts`，只保留 required modules。補入 `frontend-web/index.html` 與 `public/`。新增 CI `Validate portable CRM import build`，在 `/tmp` 實際匯出 `crm` 並執行 `mvn test`, `npm ci`, `npm run build`。
+
+## 2026-05-09 - 前端 npm audit 高風險依賴
+
+### 問題: `axios` high vulnerability 與間接依賴弱點
+**Issue**: 在 portable import smoke 的 `npm ci` 後，npm 顯示 `3 vulnerabilities (2 moderate, 1 high)`；執行 `npm audit --json` 後確認高風險來源為 `axios`，另有 `follow-redirects` 與 `postcss` 間接依賴弱點。
+**原因分析**: `package-lock.json` 鎖定 `axios 1.14.0`、`follow-redirects 1.15.11`、`postcss 8.5.8`，落在 npm audit 公告的受影響版本範圍內。雖然前端 build 可通過，但正式導入其他專案時會留下安全掃描風險。
+**Solution**: 在 `module/frontend-web` 執行 `npm audit fix` 更新 lockfile，實際升級至 `axios 1.16.0`、`follow-redirects 1.16.0`、`postcss 8.5.14`。新增 CI `npm audit --audit-level=high` gate，並重跑 `npm ci`, `npm audit --audit-level=high`, `npm run lint -- --max-warnings=0`, `npm run build` 與 portable payroll 匯入 build，結果皆通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-frontend-npm-audit-vulnerabilities.md`

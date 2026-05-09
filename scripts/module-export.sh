@@ -28,6 +28,45 @@ DEFAULT_PATHS=()
 SUPPORT_PATHS=()
 COPY_PATHS=()
 
+generated_at() {
+  date -u '+%Y-%m-%dT%H:%M:%SZ'
+}
+
+git_metadata() {
+  local field="$1"
+
+  case "$field" in
+    branch)
+      git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"
+      ;;
+    commit)
+      git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || echo "unknown"
+      ;;
+    short_commit)
+      git -C "$REPO_ROOT" rev-parse --short=12 HEAD 2>/dev/null || echo "unknown"
+      ;;
+    tag)
+      git -C "$REPO_ROOT" describe --tags --exact-match 2>/dev/null || echo ""
+      ;;
+    describe)
+      git -C "$REPO_ROOT" describe --tags --always --dirty 2>/dev/null || echo "unknown"
+      ;;
+  esac
+}
+
+git_is_dirty() {
+  if ! git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "false"
+    return
+  fi
+  if git -C "$REPO_ROOT" diff --quiet --ignore-submodules -- \
+    && git -C "$REPO_ROOT" diff --cached --quiet --ignore-submodules --; then
+    echo "false"
+  else
+    echo "true"
+  fi
+}
+
 usage() {
   cat <<'USAGE'
 模組搬移工具 / Module export helper
@@ -396,10 +435,31 @@ print_json_modules() {
 
 print_json_manifest() {
   printf '{\n'
-  printf '  "schemaVersion": "1.0",\n'
+  printf '  "schemaVersion": "1.1",\n'
+  printf '  "generatedAt": '
+  json_quote "$(generated_at)"
+  printf ',\n'
   printf '  "repository": '
   json_quote "$REPO_ROOT"
   printf ',\n'
+  printf '  "source": {\n'
+  printf '    "branch": '
+  json_quote "$(git_metadata branch)"
+  printf ',\n'
+  printf '    "commit": '
+  json_quote "$(git_metadata commit)"
+  printf ',\n'
+  printf '    "shortCommit": '
+  json_quote "$(git_metadata short_commit)"
+  printf ',\n'
+  printf '    "tag": '
+  json_quote "$(git_metadata tag)"
+  printf ',\n'
+  printf '    "describe": '
+  json_quote "$(git_metadata describe)"
+  printf ',\n'
+  printf '    "dirty": %s\n' "$(git_is_dirty)"
+  printf '  },\n'
   print_json_array_field "requestedModules" "${REQUESTED_MODULES[@]}"
   print_json_array_field "requiredModules" "${REQUIRED_MODULES[@]}"
   print_json_array_field "additionalModules" "${ADDITIONAL_MODULES[@]}"
@@ -412,6 +472,43 @@ print_json_manifest() {
   print_json_array_field "copyPaths" "${COPY_PATHS[@]}"
   print_json_modules
   printf '}\n'
+}
+
+print_bundle_readme() {
+  local module
+
+  echo "# Module Bundle"
+  echo
+  echo "This portable bundle was generated from the enterprise modular component repository."
+  echo
+  echo "## Source"
+  echo
+  echo "- Repository: \`$REPO_ROOT\`"
+  echo "- Branch: \`$(git_metadata branch)\`"
+  echo "- Commit: \`$(git_metadata commit)\`"
+  echo "- Describe: \`$(git_metadata describe)\`"
+  echo "- Dirty worktree at export: \`$(git_is_dirty)\`"
+  echo "- Generated at: \`$(generated_at)\`"
+  echo
+  echo "## Requested Modules"
+  for module in "${REQUESTED_MODULES[@]}"; do
+    echo "- \`$module\`"
+  done
+  echo
+  echo "## Included Modules"
+  for module in "${REQUIRED_MODULES[@]}"; do
+    echo "- \`$module\` - $(display_name_for "$module")"
+  done
+  echo
+  echo "## Required Verification"
+  echo
+  echo "\`\`\`bash"
+  echo "mvn -f module/backend/pom.xml test"
+  echo "cd module/frontend-web && npm ci && npm run build"
+  echo "docker compose -f module/docker/local/docker-compose.yml config"
+  echo "\`\`\`"
+  echo
+  echo "Machine-readable details are stored in \`module/module-bundle-manifest.json\`."
 }
 
 print_comma_list() {
@@ -971,6 +1068,7 @@ write_portable_files() {
   local target_backend="$TARGET_ROOT/module/backend"
   local target_frontend="$TARGET_ROOT/module/frontend-web"
 
+  mkdir -p "$TARGET_ROOT/module"
   print_backend_parent_pom > "$target_backend/pom.xml"
   print_app_pom > "$target_backend/app/pom.xml"
   print_application_java > "$target_backend/app/src/main/java/com/enterprise/Application.java"
@@ -979,6 +1077,8 @@ write_portable_files() {
 
   print_frontend_app > "$target_frontend/src/App.tsx"
   print_frontend_navigation > "$target_frontend/src/shared/navigation/moduleNavigation.ts"
+  print_json_manifest > "$TARGET_ROOT/module/module-bundle-manifest.json"
+  print_bundle_readme > "$TARGET_ROOT/module/MODULE_BUNDLE.md"
 }
 
 copy_paths() {

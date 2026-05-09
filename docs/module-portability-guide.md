@@ -38,6 +38,13 @@ scripts/module-export.sh --modules payroll --format json > /tmp/module-export.js
 JSON manifest 可給其他工具或 CI 讀取，主要欄位：
 
 - `schemaVersion`
+- `generatedAt`
+- `source.branch`
+- `source.commit`
+- `source.shortCommit`
+- `source.tag`
+- `source.describe`
+- `source.dirty`
 - `requestedModules`
 - `requiredModules`
 - `additionalModules`
@@ -49,6 +56,8 @@ JSON manifest 可給其他工具或 CI 讀取，主要欄位：
 - `supportPaths`
 - `copyPaths`
 - `modules`
+
+`source.*` 欄位用於追溯匯出的母體版本。若 `source.dirty` 為 `true`，代表匯出時母體工作樹含尚未提交的變更，不建議直接作為正式導入基準。
 
 ## 4. 產生 Markdown 清冊
 
@@ -109,6 +118,8 @@ scripts/module-export.sh --modules payroll --target /path/to/target-project --ex
 - `module/backend/app/src/main/resources/application.yml`：只啟用已匯出模組與對應 Flyway locations
 - `module/frontend-web/src/App.tsx`：只匯入已匯出 feature 的頁面
 - `module/frontend-web/src/shared/navigation/moduleNavigation.ts`：只保留已匯出模組的導覽資料
+- `module/module-bundle-manifest.json`：記錄匯出時間、母體 branch/commit/tag/dirty 狀態與模組清單
+- `module/MODULE_BUNDLE.md`：提供人類可讀的 bundle 來源、包含模組與導入後驗證指令
 
 ## 8. 導入後檢查
 
@@ -128,3 +139,5 @@ docker compose -f module/docker/local/docker-compose.yml config
 - 新增通用功能時，先評估是否應抽回母體，而不是只留在客製專案。
 - `module/backend/module-system/src/main/resources/module-catalog.tsv` 是模組清冊單一來源，`module-system` Feature Toggle 與 `scripts/module-export.sh` 都會讀取它。
 - 搬移後若修改目標專案 UI，仍應保留 API contract、型別與模組 key 的相容性。
+- 正式交付或跨專案導入前，請確認 `module/module-bundle-manifest.json` 的 `source.dirty` 為 `false`，並在目標專案提交訊息或 devlog 中記錄 `source.shortCommit`。
+- 發布 tag、正式導入與升級流程請參考 `docs/module-release-guide.md`。
