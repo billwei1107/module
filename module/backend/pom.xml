@@ -38,6 +38,7 @@
         <module>module-project</module>
         <module>module-document</module>
         <module>module-report</module>
+        <module>module-crm</module>
         <module>app</module>
     </modules>
 

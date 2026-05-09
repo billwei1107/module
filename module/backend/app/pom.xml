@@ -96,6 +96,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.enterprise</groupId>
+            <artifactId>module-crm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Database Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>

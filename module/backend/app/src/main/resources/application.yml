@@ -25,7 +25,8 @@ spring:
       classpath:db/migration/payroll,
       classpath:db/migration/project,
       classpath:db/migration/document,
-      classpath:db/migration/report
+      classpath:db/migration/report,
+      classpath:db/migration/crm
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -54,6 +55,7 @@ modules:
   project: true
   document: true
   report: true
+  crm: true
 
 pos:
   auth:
