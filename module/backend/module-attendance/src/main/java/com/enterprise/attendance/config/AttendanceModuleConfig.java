@@ -1,5 +1,6 @@
 package com.enterprise.attendance.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * @description_zh 解耦 JPA 掃描路徑，確保模塊可獨立裝卸
  */
 @Configuration
+@ConditionalOnProperty(prefix = "modules", name = "attendance", havingValue = "true", matchIfMissing = true)
 @ComponentScan(basePackages = "com.enterprise.attendance")
 @EntityScan(basePackages = "com.enterprise.attendance.entity")
 @EnableJpaRepositories(basePackages = "com.enterprise.attendance.repository")
