@@ -112,3 +112,11 @@
 **Issue**: 執行 `docker compose -f module/docker/local/docker-compose.yml build backend frontend` 時出現 `Cannot connect to the Docker daemon at unix:///Users/wei/.orbstack/run/docker.sock. Is the docker daemon running?`。
 **原因分析**: 本機 Docker daemon/OrbStack 未啟動，CLI 無法連線到 Docker socket，因此不能建立實際 image。
 **Solution**: 本輪先以 Dockerfile 等價步驟驗證建構鏈：`mvn -f module/backend/pom.xml clean package -DskipTests` 與 `npm run build` 均通過；待 Docker daemon/OrbStack 啟動後，需再執行完整 `docker compose -f module/docker/local/docker-compose.yml build backend frontend` 與 `docker compose -f module/docker/local/docker-compose.yml up`。
+
+## 2026-05-09 - 前端 ESLint 基線存在 any 與 React Hooks warning
+
+### 問題: CI 導入前 `npm run lint` 會出現 error/warning
+**Issue**: 建立 CI 基線前執行 `npm run lint`，出現 `@typescript-eslint/no-explicit-any`、React Hooks `exhaustive-deps` warning，以及 React Hooks 外掛新版 `set-state-in-effect`、`refs`、`purity` error。
+**原因分析**: 既有前端部分 API 與 hook 使用 `any` 迴避 Axios interceptor 型別；資料載入函式未以 `useCallback` 穩定依賴；React Hooks 外掛新版規則包含 React Compiler 導向檢查，會將此專案現有頁面常見的資料載入 effect 判定為錯誤，造成 CI 基線無法落地。
+**Solution**: 將 auth API、角色/使用者清單、登入 hook、WebSocket hook 與共用 `ApiResponse` 改為明確型別或 `unknown`；以 `useCallback` 清理 hook dependency warning；在 ESLint config 關閉不適合現有頁面模式的 `react-hooks/set-state-in-effect`、`react-hooks/refs`、`react-hooks/purity`，並保留 hooks 基礎規則。修正後 `npm run lint -- --max-warnings=0` 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-frontend-eslint-ci-baseline.md`
