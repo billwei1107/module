@@ -10,7 +10,23 @@
 - 新的可重用模組應在母體建立正式模組，再由目標專案透過 export 導入。
 - 每次母體變更完成後，都必須重新跑 release readiness gate。
 
-## 2. 變更分類
+## 2. 母體倉庫位置
+
+本母體已從 POS 專案根目錄獨立出來，正式可修改來源是單獨的 Git 倉庫：
+
+```text
+/Users/wei/Desktop/code/模塊化組件/
+```
+
+遠端來源：
+
+```text
+billwei1107/module
+```
+
+不同開發機可 clone 到其他位置，但 AI 執行回寫時必須先定位「真正的母體 Git 倉庫」，不可把目標專案內的 `reference/模塊化組件/` 當成正式修改來源。`reference/模塊化組件/` 只用於讀文件、規劃與執行匯出工具。
+
+## 3. 變更分類
 
 ### A. 專案專屬變更
 
@@ -46,7 +62,7 @@
 
 處理方式：在母體新增正式模組或擴充既有模組，再由目標專案導入。
 
-## 3. 目標專案追加既有模組流程
+## 4. 目標專案追加既有模組流程
 
 追加前先讀目標專案現況：
 
@@ -88,11 +104,11 @@ scripts/module-export.sh \
 scripts/module-verify-import.sh --target /path/to/target-project
 ```
 
-## 4. 通用 bug 回寫母體流程
+## 5. 通用 bug 回寫母體流程
 
 1. 在目標專案重現問題，記錄錯誤情境與期望行為。
 2. 判斷是否屬於通用模組問題。
-3. 回到母體倉庫，例如 `/Users/wei/Desktop/code/POS/模塊化組件`。
+3. 回到真正的母體 Git 倉庫，例如 `/Users/wei/Desktop/code/模塊化組件`。
 4. 確認位於 feature 或 release 分支，並拉取最新遠端。
 5. 在母體修正對應 backend/frontend/Flyway/文件。
 6. 補測試或更新既有測試。
@@ -109,7 +125,7 @@ scripts/module-release-check.sh --modules payroll
 
 若只修特定模組，可先跑局部測試，但正式發布前仍需跑 release check。
 
-## 5. 新增通用模組流程
+## 6. 新增通用模組流程
 
 新增模組時，請在母體完成以下項目：
 
@@ -157,16 +173,17 @@ scripts/module-release-check.sh --modules [key]
 scripts/module-release-check.sh --modules payroll,[key]
 ```
 
-## 6. 禁止事項
+## 7. 禁止事項
 
 - 禁止在目標專案直接覆蓋已客製化的前端 UI。
 - 禁止直接複製整個母體倉庫到目標專案源碼根目錄。
+- 禁止在目標專案的 `reference/模塊化組件/` 內直接修改並當成母體發布來源。
 - 禁止讓目標專案使用 `source.dirty=true` 的 bundle 作為正式基線。
 - 禁止只更新 `module-catalog.tsv` 卻不更新 `docs/module-catalog.md`。
 - 禁止新增模組但不補 Flyway location、feature toggle 與導入驗證。
 - 禁止在 `main/master` 直接開發母體模組。
 
-## 7. 目標專案應記錄的內容
+## 8. 目標專案應記錄的內容
 
 每次導入、追加或升級模組後，目標專案 devlog 或 PR 說明應記錄：
 
@@ -182,7 +199,7 @@ manifest diff 摘要：
 是否有專案客製未回寫母體：
 ```
 
-## 8. 回寫後發布基線
+## 9. 回寫後發布基線
 
 母體修正或新增模組完成後，使用以下順序：
 
@@ -198,10 +215,11 @@ git push origin module-vYYYY.MM.DD.N
 
 若只是文件或規範更新，也仍需跑 CI，並視是否要讓新專案基線包含該規範來建立新 tag。
 
-## 9. 給其他 AI 的最小提示詞
+## 10. 給其他 AI 的最小提示詞
 
 ```text
 如果你在目標專案中修到通用模組 bug，或新增可重用模組，請先閱讀 reference/模塊化組件/ai-module-change-protocol.md。
 專案專屬 UI 可留在目標專案；通用 API、DTO、Flyway、module key、feature toggle 必須回寫模塊化組件母體。
+reference/模塊化組件 只能作為參考；正式回寫請切到真正母體 Git 倉庫，例如 /Users/wei/Desktop/code/模塊化組件。
 回寫母體後必須跑 module-release-check.sh、commit、push，並建立新的 module-vYYYY.MM.DD.N tag。
 ```

@@ -4,6 +4,14 @@
 
 ## 1. 使用定位
 
+本倉庫是跨專案共用的模塊化組件母體，已從 POS 專案根目錄獨立出來。母體實際 clone 路徑可依開發機環境調整；目前建議位置為：
+
+```text
+/Users/wei/Desktop/code/模塊化組件/
+```
+
+其他專案若需要讓 AI 在規劃階段參考模組，請把母體以 clone、submodule 或複製 release tag 的方式放在目標專案的 `reference/模塊化組件/`。該 reference 只作為規劃與匯出工具來源，不是正式業務源碼。
+
 當新專案旁邊放有本母體倉庫，例如：
 
 ```text
@@ -32,7 +40,7 @@ AI 應把 `reference/模塊化組件/` 視為模組母體與規劃參考，不�
 - 先根據需求選出候選模組，再用 `scripts/module-export.sh` 展開依賴。
 - 前端 UI 可依新專案設計重做；API contract、DTO、module key、Flyway migration、feature toggle 語意不可任意改。
 - 目標專案若已有 `module/module-bundle-manifest.json`，新增模組前必須先讀取既有 manifest。
-- 正式導入基線應使用最新 release tag；目前基線為 `module-v2026.05.09.1`。
+- 正式導入基線應使用最新 release tag；目前基線為 `module-v2026.05.09.2`。
 
 ## 4. 模組地圖
 

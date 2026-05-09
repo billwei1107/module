@@ -253,7 +253,9 @@ jobs:
           test -f CHANGELOG.md
           test -f ai-module-planning.md
           test -f ai-module-change-protocol.md
-          grep -q "module-v2026.05.09.1" ai-module-planning.md
+          grep -q "module-v2026.05.09.2" ai-module-planning.md
+          grep -q "/Users/wei/Desktop/code/模塊化組件" ai-module-planning.md
+          grep -q "/Users/wei/Desktop/code/模塊化組件" ai-module-change-protocol.md
           grep -q "scripts/module-export.sh" ai-module-planning.md
           grep -q "scripts/module-manifest-diff.sh" ai-module-change-protocol.md
           grep -q "scripts/module-release-check.sh" ai-module-change-protocol.md

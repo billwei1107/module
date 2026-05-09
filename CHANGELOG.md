@@ -4,6 +4,9 @@ All notable changes to the enterprise modular component repository are recorded 
 
 ## Unreleased
 
+### Changed
+- Clarified that the module source repository now lives outside the POS project root and should be treated as the single writable parent repository.
+
 ### Added
 - Added `ai-module-planning.md` as the AI-first planning entry for selecting reusable modules in new projects.
 - Added `ai-module-change-protocol.md` to define how target-project fixes, reusable changes, and new modules are written back to the module source repository.

@@ -4,6 +4,8 @@
 
 新專案規劃時先讀根目錄 `ai-module-planning.md`；既有專案追加模組、修正通用 bug 或新增可重用模組時先讀 `ai-module-change-protocol.md`。
 
+母體倉庫是獨立於 POS 或任何目標專案的 Git 倉庫，目前建議本機位置為 `/Users/wei/Desktop/code/模塊化組件/`。其他專案中的 `reference/模塊化組件/` 不應作為發布來源。
+
 ## 1. 發布基線
 
 正式導入其他專案前，母體倉庫必須位於乾淨的開發分支或已審核的 release commit：

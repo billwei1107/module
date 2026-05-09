@@ -4,6 +4,8 @@
 
 若新專案尚未決定要導入哪些模組，請先閱讀根目錄 `ai-module-planning.md`。若是在既有專案追加模組、修正通用 bug 或新增可重用模組，請先閱讀 `ai-module-change-protocol.md`。
 
+母體倉庫已從 POS 專案根目錄獨立出來，目前建議位置為 `/Users/wei/Desktop/code/模塊化組件/`。目標專案中的 `reference/模塊化組件/` 只作為 AI 規劃參考與匯出工具來源；正式導入結果會落在目標專案的 `module/`。
+
 ## 1. 確認模組 key
 
 ```bash
