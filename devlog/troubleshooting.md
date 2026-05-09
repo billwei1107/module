@@ -81,3 +81,11 @@
 **原因分析**: 模組配置類上的條件只控制該配置類是否生效，但 app 的全域掃描已經覆蓋所有 `com.enterprise.*` package，會繞過 `ModuleConfig` 的 gating。`notification` 的 `WebSocketConfig` 也獨立位於 config package，需跟隨模組開關。
 **Solution**: 將 `Application` 掃描範圍縮小為 `com.enterprise.common` 與各模組 `config` package；由每個 `ModuleConfig` 在模組啟用時自行 `@ComponentScan` 模組 package。補上 `AttendanceModuleConfig`、`NotificationModuleConfig`、`WebSocketConfig` 的 `@ConditionalOnProperty`，並替 `WorkflowModuleConfig` 補 `@ComponentScan`。新增 `ModuleFeatureToggleMetadataTest` 鎖定掃描邊界與 `modules.*` 開關元資料。修正後 `mvn test -pl app -am` 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-spring-global-scan-bypasses-feature-toggle.md`
+
+## 2026-05-09 - Spring Profile 模組開關繼承造成業態組合失真
+
+### 問題: `application-*.yml` 未列出的 `modules.*` 會沿用 base 預設
+**Issue**: 業態 profile（如 `application-cafe.yml`, `application-fastfood.yml`）只宣告 `auth`, `organization`, `workflow`, `notification`, `attendance`，未宣告的 `finance`, `payroll`, `project` 等模組會沿用 `application.yml` 的 `true`，導致啟用特定 profile 時載入非該業態預期的模組。
+**原因分析**: Spring Boot 會將 base `application.yml` 與 profile-specific YAML 合併；profile 只覆寫有宣告的 key，未宣告的 map key 不會自動變成 false。因此模組化母體若在 base 開啟多數模組，業態 profile 必須明確列出全部 `modules.*`。
+**Solution**: 補齊 cafe、fastfood、restaurant、retail、chain-hq 五個 profile 的 17 個模組開關，避免隱式繼承 base 預設。並在 `ModuleFeatureToggleMetadataTest` 新增 profile 完整性測試與依賴一致性測試，確保每個 profile 明確宣告所有模組，且 `payroll`、`leave`、`finance`、`meeting` 等依賴組合不會被拆壞。修正後 `mvn test -pl app -am` 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-spring-profile-module-toggle-inheritance.md`
