@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import axiosInstance from '../../../shared/api/axiosInstance';
+import type { ApiResponse } from '../../../shared/types';
 import type { Role } from '../types';
 
 /**
@@ -11,13 +12,19 @@ export const RolePermissionTree = () => {
     const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // ========================================
+    // 清單資料正規化 / List Data Normalization
+    // ========================================
+    const normalizeRoleList = (payload: Role[] | { content?: Role[] }): Role[] => {
+        return Array.isArray(payload) ? payload : payload.content || [];
+    };
+
     useEffect(() => {
         const fetchRoles = async () => {
             try {
-                const res = await axiosInstance.get('/v1/roles');
-                if (res && (res as any).data) {
-                    const payload = (res as any).data;
-                    setRoles(Array.isArray(payload) ? payload : payload.content || []);
+                const res = await axiosInstance.get<ApiResponse<Role[] | { content?: Role[] }>, ApiResponse<Role[] | { content?: Role[] }>>('/v1/roles');
+                if (res.data) {
+                    setRoles(normalizeRoleList(res.data));
                 }
             } catch (error) {
                 console.error(error);

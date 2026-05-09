@@ -2,14 +2,23 @@ import { useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuthStore } from '../../../shared/store/authStore';
+import type { NotificationDTO } from '../types';
+
+/**
+ * @file useWebSocket.ts
+ * @description 通知 WebSocket Hook / Notification WebSocket hook
+ * @description_en Connects the authenticated user to notification streams
+ * @description_zh 將已登入使用者連接至通知推播串流
+ */
 
 interface UseWebSocketOptions {
     onUnreadCountUpdate?: (count: number) => void;
-    onNewNotification?: (notification: any) => void;
+    onNewNotification?: (notification: NotificationDTO) => void;
 }
 
-export const useWebSocket = (options: UseWebSocketOptions) => {
+export const useWebSocket = (options: UseWebSocketOptions): void => {
     const { user, token } = useAuthStore();
+    const { onNewNotification, onUnreadCountUpdate } = options;
     const clientRef = useRef<Client | null>(null);
 
     useEffect(() => {
@@ -37,15 +46,15 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
 
             // 訂閱專屬用戶的未讀數字
             client.subscribe(`/user/${user.id}/queue/notifications/count`, (message) => {
-                if (options.onUnreadCountUpdate) {
-                    options.onUnreadCountUpdate(Number(message.body));
+                if (onUnreadCountUpdate) {
+                    onUnreadCountUpdate(Number(message.body));
                 }
             });
 
             // 訂閱專屬用戶的新推播實體
             client.subscribe(`/user/${user.id}/queue/notifications/new`, (message) => {
-                if (options.onNewNotification) {
-                    options.onNewNotification(JSON.parse(message.body));
+                if (onNewNotification) {
+                    onNewNotification(JSON.parse(message.body) as NotificationDTO);
                 }
             });
         };
@@ -58,7 +67,6 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
                 clientRef.current.deactivate();
             }
         };
-    }, [user, token]);
+    }, [onNewNotification, onUnreadCountUpdate, token, user]);
 
-    return clientRef.current;
 };

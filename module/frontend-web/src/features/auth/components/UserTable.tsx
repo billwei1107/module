@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Box } from '@mui/material';
 import axiosInstance from '../../../shared/api/axiosInstance';
+import type { ApiResponse } from '../../../shared/types';
 import type { User } from '../types';
 
 /**
@@ -11,13 +12,19 @@ export const UserTable = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // ========================================
+    // 清單資料正規化 / List Data Normalization
+    // ========================================
+    const normalizeUserList = (payload: User[] | { content?: User[] }): User[] => {
+        return Array.isArray(payload) ? payload : payload.content || [];
+    };
+
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const res = await axiosInstance.get('/v1/users');
-                if (res && (res as any).data) {
-                    const payload = (res as any).data;
-                    setUsers(Array.isArray(payload) ? payload : payload.content || []);
+                const res = await axiosInstance.get<ApiResponse<User[] | { content?: User[] }>, ApiResponse<User[] | { content?: User[] }>>('/v1/users');
+                if (res.data) {
+                    setUsers(normalizeUserList(res.data));
                 }
             } catch (err) {
                 console.error("Failed to fetch users", err);

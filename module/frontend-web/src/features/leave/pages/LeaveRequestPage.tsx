@@ -4,7 +4,7 @@
  * @description_zh 提供員工建立請假申請並查看個人請假紀錄
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     Box,
@@ -40,7 +40,7 @@ export const LeaveRequestPage = () => {
         [leaveTypes],
     );
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         const [typesResult, requestsResult] = await Promise.all([
             getLeaveTypes(),
             getLeaveRequests(employeeId),
@@ -50,11 +50,11 @@ export const LeaveRequestPage = () => {
         if (!leaveTypeId && typesResult.length > 0) {
             setLeaveTypeId(typesResult[0].id);
         }
-    };
+    }, [employeeId, leaveTypeId]);
 
     useEffect(() => {
         loadData().catch(() => setMessage('載入請假資料失敗 / Failed to load leave data'));
-    }, []);
+    }, [loadData]);
 
     // ========================================
     // 送出請假 / Submit Leave Request

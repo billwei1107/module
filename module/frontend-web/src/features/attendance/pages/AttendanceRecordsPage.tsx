@@ -4,7 +4,7 @@
  * @description_en Monthly attendance records with color-coded status indicators
  * @description_zh 月度打卡記錄，以顏色標示正常/遲到/缺勤狀態
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Box, Typography, Table, TableHead, TableRow, TableCell,
     TableBody, Chip, CircularProgress, TextField, MenuItem,
@@ -40,7 +40,7 @@ export const AttendanceRecordsPage = () => {
     // 測試用固定 employeeId，實際應從 Auth context 取得
     const employeeId = 'd290f1ee-6c54-4b01-90e6-d701748f0851';
 
-    const fetchRecords = async () => {
+    const fetchRecords = useCallback(async () => {
         setLoading(true);
         try {
             const data = await getMonthlyRecords(employeeId, year, month);
@@ -50,9 +50,9 @@ export const AttendanceRecordsPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [employeeId, year, month]);
 
-    useEffect(() => { fetchRecords(); }, [year, month]);
+    useEffect(() => { fetchRecords(); }, [fetchRecords]);
 
     // ========================================
     // 統計摘要 / Summary stats

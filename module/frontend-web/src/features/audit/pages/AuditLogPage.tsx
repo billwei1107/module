@@ -5,7 +5,7 @@
  * @description_zh 提供母體庫驗證稽核日誌查詢與 CSV 匯出的最小頁面
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
     Button,
@@ -29,20 +29,20 @@ export const AuditLogPage = () => {
     const [message, setMessage] = useState('');
     const [csvPreview, setCsvPreview] = useState('');
 
-    const buildQuery = (): AuditLogQuery => ({
+    const buildQuery = useCallback((): AuditLogQuery => ({
         module: moduleFilter || undefined,
         action: actionFilter || undefined,
         size: 20,
-    });
+    }), [actionFilter, moduleFilter]);
 
-    const loadLogs = async () => {
+    const loadLogs = useCallback(async () => {
         const result = await getAuditLogs(buildQuery());
         setLogs(result.content);
-    };
+    }, [buildQuery]);
 
     useEffect(() => {
         loadLogs().catch(() => setMessage('載入稽核日誌失敗 / Failed to load audit logs'));
-    }, []);
+    }, [loadLogs]);
 
     // ========================================
     // 匯出驗證 / Export Verification

@@ -4,7 +4,7 @@
  * @description_en Department/individual attendance statistics with summary cards
  * @description_zh 部門或個人出勤統計，顯示出勤天數、遲到次數、加班時數
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Box, Typography, Card, CardContent, Grid,
     TextField, MenuItem, Stack, Button, CircularProgress
@@ -23,7 +23,7 @@ export const AttendanceReportPage = () => {
     // 測試用固定 employeeId，實際應從 Auth context 取得
     const employeeId = 'd290f1ee-6c54-4b01-90e6-d701748f0851';
 
-    const fetchReport = async () => {
+    const fetchReport = useCallback(async () => {
         setLoading(true);
         try {
             const data = await getMonthlyRecords(employeeId, year, month);
@@ -33,9 +33,9 @@ export const AttendanceReportPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [employeeId, year, month]);
 
-    useEffect(() => { fetchReport(); }, [year, month]);
+    useEffect(() => { fetchReport(); }, [fetchReport]);
 
     // ========================================
     // 統計計算 / Statistics calculation
