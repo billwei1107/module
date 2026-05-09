@@ -1,5 +1,6 @@
 package com.enterprise.system.service.impl;
 
+import com.enterprise.common.annotation.Auditable;
 import com.enterprise.common.exception.BusinessException;
 import com.enterprise.system.entity.SequenceRule;
 import com.enterprise.system.repository.SequenceRuleRepository;
@@ -24,6 +25,7 @@ public class SequenceRuleServiceImpl implements SequenceRuleService {
 
     @Override
     @Transactional
+    @Auditable(module = "system", action = "GENERATE_SEQUENCE")
     public synchronized String getNextSequence(String name) {
         SequenceRule rule = sequenceRuleRepository.findByNameAndDeletedAtIsNull(name)
                 .orElseThrow(() -> new BusinessException(404, "流水號規則不存在 / Sequence rule not found"));

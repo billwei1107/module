@@ -24,6 +24,7 @@ import { AttendanceReportPage } from './features/attendance/pages/AttendanceRepo
 import { LeaveRequestPage } from './features/leave/pages/LeaveRequestPage';
 import { LeaveApprovalPage } from './features/leave/pages/LeaveApprovalPage';
 import { SystemSettingsPage } from './features/system/pages/SystemSettingsPage';
+import { AuditLogPage } from './features/audit/pages/AuditLogPage';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -42,6 +43,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
         <Button color="inherit" component={Link} to="/leave/requests">請假</Button>
         <Button color="inherit" component={Link} to="/leave/approval">請假審核</Button>
         <Button color="inherit" component={Link} to="/system">系統設定</Button>
+        <Button color="inherit" component={Link} to="/audit/logs">稽核日誌</Button>
         <Button color="inherit" component={Link} to="/login">登出</Button>
       </Toolbar>
     </AppBar>
@@ -74,6 +76,7 @@ function App() {
           <Route path="/leave/requests" element={<AppLayout><LeaveRequestPage /></AppLayout>} />
           <Route path="/leave/approval" element={<AppLayout><LeaveApprovalPage /></AppLayout>} />
           <Route path="/system" element={<AppLayout><SystemSettingsPage /></AppLayout>} />
+          <Route path="/audit/logs" element={<AppLayout><AuditLogPage /></AppLayout>} />
 
           {/* 預設導向登入頁面 */}
           <Route path="/" element={<Navigate to="/department" replace />} />

@@ -1,5 +1,6 @@
 package com.enterprise.system.service.impl;
 
+import com.enterprise.common.annotation.Auditable;
 import com.enterprise.common.exception.BusinessException;
 import com.enterprise.system.dto.SystemConfigDTO;
 import com.enterprise.system.dto.UpdateSystemConfigRequest;
@@ -33,6 +34,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
 
     @Override
     @Transactional
+    @Auditable(module = "system", action = "UPSERT_SYSTEM_CONFIG")
     public SystemConfigDTO upsertConfig(UpdateSystemConfigRequest request) {
         if (request.getKey() == null || request.getKey().isBlank()) {
             throw new BusinessException(400, "設定鍵不可為空 / Config key is required");
