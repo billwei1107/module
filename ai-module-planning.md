@@ -2,6 +2,8 @@
 
 本文件是給 AI 在新專案規劃階段先閱讀的入口。它用來判斷「新專案可能需要哪些模組」，不是用來直接複製整個母體倉庫。
 
+若使用者只是把本資料夾丟進其他專案並要求 AI 接手，請先閱讀根目錄 `ai-handoff.md`，再依本文件進行模組規劃。
+
 ## 1. 使用定位
 
 本倉庫是跨專案共用的模塊化組件母體，已從 POS 專案根目錄獨立出來。母體實際 clone 路徑可依開發機環境調整；目前建議位置為：
@@ -28,11 +30,12 @@ AI 應把 `reference/模塊化組件/` 視為模組母體與規劃參考，不�
 
 新專案規劃前請依序閱讀：
 
-1. `ai-module-planning.md`：先理解模組地圖與常見組合
-2. `docs/module-catalog.md`：確認完整模組、依賴、後端/前端/Flyway 路徑
-3. `docs/module-portability-guide.md`：確認匯出與導入流程
-4. `docs/module-release-guide.md`：確認正式基線、tag 與驗證要求
-5. `ai-module-change-protocol.md`：確認開發中修正或新增模組時如何回寫母體
+1. `ai-handoff.md`：先理解 AI 接手、匯入與回寫的最短流程
+2. `ai-module-planning.md`：先理解模組地圖與常見組合
+3. `docs/module-catalog.md`：確認完整模組、依賴、後端/前端/Flyway 路徑
+4. `docs/module-portability-guide.md`：確認匯出與導入流程
+5. `docs/module-release-guide.md`：確認正式基線、tag 與驗證要求
+6. `ai-module-change-protocol.md`：確認開發中修正或新增模組時如何回寫母體
 
 ## 3. 規劃原則
 
@@ -40,7 +43,7 @@ AI 應把 `reference/模塊化組件/` 視為模組母體與規劃參考，不�
 - 先根據需求選出候選模組，再用 `scripts/module-export.sh` 展開依賴。
 - 前端 UI 可依新專案設計重做；API contract、DTO、module key、Flyway migration、feature toggle 語意不可任意改。
 - 目標專案若已有 `module/module-bundle-manifest.json`，新增模組前必須先讀取既有 manifest。
-- 正式導入基線應使用最新 release tag；目前基線為 `module-v2026.05.09.2`。
+- 正式導入基線應使用最新 release tag；目前基線為 `module-v2026.05.10.1`。
 
 ## 4. 模組地圖
 
@@ -194,7 +197,7 @@ scripts/module-verify-import.sh --target /path/to/target-project
 ## 8. 給其他 AI 的最小提示詞
 
 ```text
-請先閱讀 reference/模塊化組件/ai-module-planning.md。
+請先閱讀 reference/模塊化組件/ai-handoff.md，再閱讀 ai-module-planning.md。
 reference/模塊化組件 是模組母體，只能參考與匯出模組，不要整包複製進專案源碼。
 請根據新專案需求規劃需要導入哪些模組，先輸出規劃與風險，不要直接修改程式碼。
 選定模組後，使用 module-export.sh 產生 bundle，並用 module-verify-import.sh 驗證。

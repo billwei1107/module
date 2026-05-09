@@ -2,6 +2,8 @@
 
 本文件定義在其他專案開發時，如果需要修正既有模組、追加模組或新增通用模組，AI 應如何判斷、同步與回寫本母體倉庫。
 
+若使用者不打算手動操作指令，AI 應先閱讀根目錄 `ai-handoff.md`，再依本文件執行回寫與驗證。
+
 ## 1. 核心原則
 
 - 目標專案可以客製 UI 與專案專屬流程，但通用 API contract、DTO、module key、Flyway migration 與 feature toggle 行為應回寫母體。
@@ -218,7 +220,7 @@ git push origin module-vYYYY.MM.DD.N
 ## 10. 給其他 AI 的最小提示詞
 
 ```text
-如果你在目標專案中修到通用模組 bug，或新增可重用模組，請先閱讀 reference/模塊化組件/ai-module-change-protocol.md。
+如果你在目標專案中修到通用模組 bug，或新增可重用模組，請先閱讀 reference/模塊化組件/ai-handoff.md 與 ai-module-change-protocol.md。
 專案專屬 UI 可留在目標專案；通用 API、DTO、Flyway、module key、feature toggle 必須回寫模塊化組件母體。
 reference/模塊化組件 只能作為參考；正式回寫請切到真正母體 Git 倉庫，例如 /Users/wei/Desktop/code/模塊化組件。
 回寫母體後必須跑 module-release-check.sh、commit、push，並建立新的 module-vYYYY.MM.DD.N tag。

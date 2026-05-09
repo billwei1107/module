@@ -8,6 +8,7 @@ All notable changes to the enterprise modular component repository are recorded 
 - Clarified that the module source repository now lives outside the POS project root and should be treated as the single writable parent repository.
 
 ### Added
+- Added `ai-handoff.md` as the shortest handoff entry for AI agents working in target projects.
 - Added `ai-module-planning.md` as the AI-first planning entry for selecting reusable modules in new projects.
 - Added `ai-module-change-protocol.md` to define how target-project fixes, reusable changes, and new modules are written back to the module source repository.
 - Added portable module bundle generation for selected modules and recursive dependencies.

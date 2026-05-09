@@ -251,9 +251,14 @@ jobs:
           test -f docs/module-catalog.md
           test -f docs/module-release-guide.md
           test -f CHANGELOG.md
+          test -f ai-handoff.md
           test -f ai-module-planning.md
           test -f ai-module-change-protocol.md
-          grep -q "module-v2026.05.09.2" ai-module-planning.md
+          grep -q "module-v2026.05.10.1" ai-module-planning.md
+          grep -q "reference/模塊化組件/ai-handoff.md" ai-handoff.md
+          grep -q "module-release-check.sh" ai-handoff.md
+          grep -q "/Users/wei/Desktop/code/模塊化組件" ai-handoff.md
+          grep -q "ai-handoff.md" ai-module-planning.md
           grep -q "/Users/wei/Desktop/code/模塊化組件" ai-module-planning.md
           grep -q "/Users/wei/Desktop/code/模塊化組件" ai-module-change-protocol.md
           grep -q "scripts/module-export.sh" ai-module-planning.md
@@ -272,7 +277,9 @@ jobs:
           grep -q "module-verify-import.sh" docs/module-release-guide.md
           grep -q "module-manifest-diff.sh" docs/module-release-guide.md
           grep -q "module-release-check.sh" docs/module-release-guide.md
+          grep -q "ai-handoff.md" docs/module-release-guide.md
           grep -q "ai-module-planning.md" docs/module-release-guide.md
+          grep -q "ai-handoff.md" docs/module-portability-guide.md
           grep -q "ai-module-change-protocol.md" docs/module-portability-guide.md
           grep -q "module-vYYYY.MM.DD.N" docs/module-release-guide.md
           grep -q "source.shortCommit" docs/module-release-guide.md
