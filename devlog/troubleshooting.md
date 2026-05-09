@@ -57,3 +57,11 @@
 **原因分析**: 此前端專案沒有 `playwright.config` project 名稱，不能指定 `--project=chromium`；庫存筆數文字被低庫存筆數部分匹配；`freeze` API 會帶 query params，臨時 route pattern 沒有包含尾端 wildcard。
 **Solution**: 改用 `npx playwright test tmp-inventory-browser.spec.ts`；文字定位改為 `getByText('庫存筆數：0', { exact: true })`；stock-take mock route 改成 `**/stock-takes/freeze**`、`**/count**`、`**/adjust**`。修正後 inventory smoke test 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-playwright-inventory-smoke-test-routing.md`
+
+## 2026-05-09 - Playwright 按鈕名稱部分匹配造成 strict mode violation
+
+### 問題: `建立會議` 同時匹配 `建立會議室`
+**Issue**: `module-meeting` 前端 smoke test 點擊 `getByRole('button', { name: '建立會議' })` 時，同時匹配到 `建立會議室` 與 `建立會議`，Playwright 回報 strict mode violation。
+**原因分析**: Playwright role locator 的 `name` 預設允許部分匹配，兩個按鈕文字有共同片段。
+**Solution**: 將定位改為 `getByRole('button', { name: '建立會議', exact: true })`。修正後 meeting smoke test 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-playwright-button-name-partial-match.md`
