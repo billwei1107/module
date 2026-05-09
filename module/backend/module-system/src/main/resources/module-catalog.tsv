@@ -1,0 +1,22 @@
+# @file module-catalog.tsv
+# @description 模組移植清冊 / Portable module catalog
+# @description_en Single catalog source for feature toggles, dependency expansion, export scripts, and migration metadata
+# @description_zh 提供功能開關、依賴展開、匯出腳本與資料庫 migration 位置共用的模組清冊
+# Columns: module	display_name	display_name_en	phase	priority	default_path	dependencies	source_key	flyway_location
+auth	認證授權	Authentication	CORE	P0	/login	-	auth	classpath:db/migration
+organization	組織管理	Organization	CORE	P0	/department	auth	organization	classpath:db/migration/organization
+workflow	審批流程	Workflow	CORE	P0	/workflow	auth,organization	workflow	classpath:db/migration/workflow
+notification	通知中心	Notification	OPERATIONS	P1	-	auth,organization	notification	classpath:db/migration/notification
+attendance	打卡考勤	Attendance	OPERATIONS	P1	/attendance/clock-in	auth,organization	attendance	classpath:db/migration/attendance
+leave	請假管理	Leave Management	OPERATIONS	P1	/leave/requests	auth,organization,workflow,attendance	leave	classpath:db/migration/leave
+system	系統設定	System Settings	OPERATIONS	P1	/system	auth	system	classpath:db/migration/system
+audit	稽核日誌	Audit Log	OPERATIONS	P1	/audit/logs	auth	audit	classpath:db/migration/audit
+finance	財務管理	Finance	OPERATIONS	P1	/finance	auth,organization,workflow	finance	classpath:db/migration/finance
+payroll	薪資管理	Payroll	EXTENSION	P2	/payroll	auth,organization,attendance,leave,finance	payroll	classpath:db/migration/payroll
+project	專案任務	Project Management	EXTENSION	P2	/projects	auth,organization,notification	project	classpath:db/migration/project
+document	文件管理	Document Management	EXTENSION	P2	/documents	auth,organization	document	classpath:db/migration/document
+report	報表分析	Report Analytics	EXTENSION	P2	/reports	auth,organization	report	classpath:db/migration/report
+crm	客戶管理	CRM	EXTENSION	P2	/crm	auth,organization	crm	classpath:db/migration/crm
+inventory	庫存管理	Inventory	ADVANCED	P3	/inventory	auth,organization	inventory	classpath:db/migration/inventory
+meeting	會議管理	Meeting Management	ADVANCED	P3	/meetings	auth,organization,notification	meeting	classpath:db/migration/meeting
+announcement	公告系統	Announcement	ADVANCED	P3	/announcements	auth,organization,notification	announcement	classpath:db/migration/announcement

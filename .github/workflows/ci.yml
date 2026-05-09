@@ -82,6 +82,23 @@ jobs:
       - name: Validate script syntax
         run: bash -n scripts/module-export.sh
 
+      - name: Validate module catalog resource
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          catalog = Path("module/backend/module-system/src/main/resources/module-catalog.tsv")
+          rows = [
+              line.split("\t")
+              for line in catalog.read_text(encoding="utf-8").splitlines()
+              if line and not line.startswith("#")
+          ]
+          assert len(rows) == 17
+          assert all(len(row) == 9 for row in rows)
+          assert [row[0] for row in rows[:3]] == ["auth", "organization", "workflow"]
+          assert any(row[0] == "payroll" and row[6] == "auth,organization,attendance,leave,finance" for row in rows)
+          PY
+
       - name: Validate payroll dependency plan
         run: |
           scripts/module-export.sh --modules payroll > /tmp/module-export-plan.txt

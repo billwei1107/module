@@ -8,6 +8,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,42 +29,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class FeatureToggleServiceImpl implements FeatureToggleService {
 
-    private static final List<ModuleDefinition> MODULE_DEFINITIONS = List.of(
-            new ModuleDefinition("auth", "認證授權", "Authentication", "CORE", "P0",
-                    "/login", List.of(), "auth", "classpath:db/migration"),
-            new ModuleDefinition("organization", "組織管理", "Organization", "CORE", "P0",
-                    "/department", List.of("auth"), "organization", "classpath:db/migration/organization"),
-            new ModuleDefinition("workflow", "審批流程", "Workflow", "CORE", "P0",
-                    "/workflow", List.of("auth", "organization"), "workflow", "classpath:db/migration/workflow"),
-            new ModuleDefinition("notification", "通知中心", "Notification", "OPERATIONS", "P1",
-                    null, List.of("auth", "organization"), "notification", "classpath:db/migration/notification"),
-            new ModuleDefinition("attendance", "打卡考勤", "Attendance", "OPERATIONS", "P1",
-                    "/attendance/clock-in", List.of("auth", "organization"), "attendance", "classpath:db/migration/attendance"),
-            new ModuleDefinition("leave", "請假管理", "Leave Management", "OPERATIONS", "P1",
-                    "/leave/requests", List.of("auth", "organization", "workflow", "attendance"), "leave", "classpath:db/migration/leave"),
-            new ModuleDefinition("system", "系統設定", "System Settings", "OPERATIONS", "P1",
-                    "/system", List.of("auth"), "system", "classpath:db/migration/system"),
-            new ModuleDefinition("audit", "稽核日誌", "Audit Log", "OPERATIONS", "P1",
-                    "/audit/logs", List.of("auth"), "audit", "classpath:db/migration/audit"),
-            new ModuleDefinition("finance", "財務管理", "Finance", "OPERATIONS", "P1",
-                    "/finance", List.of("auth", "organization", "workflow"), "finance", "classpath:db/migration/finance"),
-            new ModuleDefinition("payroll", "薪資管理", "Payroll", "EXTENSION", "P2",
-                    "/payroll", List.of("auth", "organization", "attendance", "leave", "finance"), "payroll", "classpath:db/migration/payroll"),
-            new ModuleDefinition("project", "專案任務", "Project Management", "EXTENSION", "P2",
-                    "/projects", List.of("auth", "organization", "notification"), "project", "classpath:db/migration/project"),
-            new ModuleDefinition("document", "文件管理", "Document Management", "EXTENSION", "P2",
-                    "/documents", List.of("auth", "organization"), "document", "classpath:db/migration/document"),
-            new ModuleDefinition("report", "報表分析", "Report Analytics", "EXTENSION", "P2",
-                    "/reports", List.of("auth", "organization"), "report", "classpath:db/migration/report"),
-            new ModuleDefinition("crm", "客戶管理", "CRM", "EXTENSION", "P2",
-                    "/crm", List.of("auth", "organization"), "crm", "classpath:db/migration/crm"),
-            new ModuleDefinition("inventory", "庫存管理", "Inventory", "ADVANCED", "P3",
-                    "/inventory", List.of("auth", "organization"), "inventory", "classpath:db/migration/inventory"),
-            new ModuleDefinition("meeting", "會議管理", "Meeting Management", "ADVANCED", "P3",
-                    "/meetings", List.of("auth", "organization", "notification"), "meeting", "classpath:db/migration/meeting"),
-            new ModuleDefinition("announcement", "公告系統", "Announcement", "ADVANCED", "P3",
-                    "/announcements", List.of("auth", "organization", "notification"), "announcement", "classpath:db/migration/announcement")
-    );
+    private static final String MODULE_CATALOG_RESOURCE = "module-catalog.tsv";
+    private static final int MODULE_CATALOG_COLUMN_COUNT = 9;
+    private static final List<ModuleDefinition> MODULE_DEFINITIONS = loadModuleDefinitions();
     private static final Map<String, ModuleDefinition> MODULE_DEFINITION_MAP = MODULE_DEFINITIONS.stream()
             .collect(LinkedHashMap::new, (map, definition) -> map.put(definition.module(), definition), LinkedHashMap::putAll);
 
@@ -185,6 +158,59 @@ public class FeatureToggleServiceImpl implements FeatureToggleService {
             return "";
         }
         return definition.module() + " requires enabled modules: " + String.join(", ", missingDependencies);
+    }
+
+    // ========================================
+    // 模組清冊讀取 / Module Catalog Loading
+    // ========================================
+    private static List<ModuleDefinition> loadModuleDefinitions() {
+        InputStream stream = FeatureToggleServiceImpl.class.getClassLoader()
+                .getResourceAsStream(MODULE_CATALOG_RESOURCE);
+        if (stream == null) {
+            throw new IllegalStateException("Module catalog resource not found: " + MODULE_CATALOG_RESOURCE);
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            return reader.lines()
+                    .filter(line -> !line.isBlank() && !line.startsWith("#"))
+                    .map(FeatureToggleServiceImpl::toModuleDefinition)
+                    .toList();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read module catalog: " + MODULE_CATALOG_RESOURCE, exception);
+        }
+    }
+
+    private static ModuleDefinition toModuleDefinition(String line) {
+        String[] columns = line.split("\t", -1);
+        if (columns.length != MODULE_CATALOG_COLUMN_COUNT) {
+            throw new IllegalStateException("Invalid module catalog row: " + line);
+        }
+
+        return new ModuleDefinition(
+                columns[0],
+                columns[1],
+                columns[2],
+                columns[3],
+                columns[4],
+                parseNullable(columns[5]),
+                parseDependencies(columns[6]),
+                columns[7],
+                columns[8]
+        );
+    }
+
+    private static String parseNullable(String value) {
+        return "-".equals(value) || value.isBlank() ? null : value;
+    }
+
+    private static List<String> parseDependencies(String value) {
+        if ("-".equals(value) || value.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(dependency -> !dependency.isBlank())
+                .toList();
     }
 
     private record ModuleDefinition(

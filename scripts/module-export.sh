@@ -9,6 +9,7 @@ set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+CATALOG_FILE="$REPO_ROOT/module/backend/module-system/src/main/resources/module-catalog.tsv"
 
 MODULES_INPUT=""
 TARGET_ROOT=""
@@ -54,123 +55,76 @@ project unless --execute is provided.
 USAGE
 }
 
+ensure_catalog_file() {
+  if [[ ! -f "$CATALOG_FILE" ]]; then
+    echo "Module catalog not found: $CATALOG_FILE" >&2
+    exit 1
+  fi
+}
+
 known_modules() {
-  cat <<'MODULES'
-auth
-organization
-workflow
-notification
-attendance
-leave
-system
-audit
-finance
-payroll
-project
-document
-report
-crm
-inventory
-meeting
-announcement
-MODULES
+  awk -F '\t' 'NF && $1 !~ /^#/ { print $1 }' "$CATALOG_FILE"
+}
+
+catalog_field_for() {
+  local module="$1"
+  local field_index="$2"
+  awk -F '\t' -v module="$module" -v field_index="$field_index" '
+    NF && $1 !~ /^#/ && $1 == module {
+      print $field_index
+      found = 1
+      exit
+    }
+    END {
+      if (!found) {
+        exit 1
+      }
+    }
+  ' "$CATALOG_FILE"
 }
 
 is_known_module() {
-  case "$1" in
-    auth|organization|workflow|notification|attendance|leave|system|audit|finance|payroll|project|document|report|crm|inventory|meeting|announcement)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
+  catalog_field_for "$1" 1 >/dev/null 2>&1
 }
 
 dependencies_for() {
-  case "$1" in
-    auth)
-      echo ""
-      ;;
-    organization|system|audit)
-      echo "auth"
-      ;;
-    workflow)
-      echo "auth organization"
-      ;;
-    notification|attendance|document|report|crm|inventory)
-      echo "auth organization"
-      ;;
-    leave)
-      echo "auth organization workflow attendance"
-      ;;
-    finance)
-      echo "auth organization workflow"
-      ;;
-    payroll)
-      echo "auth organization attendance leave finance"
-      ;;
-    project|meeting|announcement)
-      echo "auth organization notification"
-      ;;
-    *)
-      echo ""
-      ;;
-  esac
+  local dependencies
+  dependencies="$(catalog_field_for "$1" 7 || true)"
+  if [[ -z "$dependencies" || "$dependencies" == "-" ]]; then
+    echo ""
+    return
+  fi
+  printf '%s\n' "$dependencies" | tr ',' ' '
 }
 
 display_name_for() {
-  case "$1" in
-    auth) echo "認證授權 / Authentication" ;;
-    organization) echo "組織管理 / Organization" ;;
-    workflow) echo "審批流程 / Workflow" ;;
-    notification) echo "通知中心 / Notification" ;;
-    attendance) echo "打卡考勤 / Attendance" ;;
-    leave) echo "請假管理 / Leave Management" ;;
-    system) echo "系統設定 / System Settings" ;;
-    audit) echo "稽核日誌 / Audit Log" ;;
-    finance) echo "財務管理 / Finance" ;;
-    payroll) echo "薪資管理 / Payroll" ;;
-    project) echo "專案任務 / Project Management" ;;
-    document) echo "文件管理 / Document Management" ;;
-    report) echo "報表分析 / Report Analytics" ;;
-    crm) echo "客戶管理 / CRM" ;;
-    inventory) echo "庫存管理 / Inventory" ;;
-    meeting) echo "會議管理 / Meeting Management" ;;
-    announcement) echo "公告系統 / Announcement" ;;
-    *) echo "$1" ;;
-  esac
+  local display_name
+  local display_name_en
+  display_name="$(catalog_field_for "$1" 2 || true)"
+  display_name_en="$(catalog_field_for "$1" 3 || true)"
+  if [[ -z "$display_name" ]]; then
+    echo "$1"
+    return
+  fi
+  echo "$display_name / $display_name_en"
 }
 
 default_path_for() {
-  case "$1" in
-    auth) echo "/login" ;;
-    organization) echo "/department" ;;
-    workflow) echo "/workflow" ;;
-    notification) echo "" ;;
-    attendance) echo "/attendance/clock-in" ;;
-    leave) echo "/leave/requests" ;;
-    system) echo "/system" ;;
-    audit) echo "/audit/logs" ;;
-    finance) echo "/finance" ;;
-    payroll) echo "/payroll" ;;
-    project) echo "/projects" ;;
-    document) echo "/documents" ;;
-    report) echo "/reports" ;;
-    crm) echo "/crm" ;;
-    inventory) echo "/inventory" ;;
-    meeting) echo "/meetings" ;;
-    announcement) echo "/announcements" ;;
-    *) echo "" ;;
-  esac
+  local default_path
+  default_path="$(catalog_field_for "$1" 6 || true)"
+  if [[ "$default_path" == "-" ]]; then
+    echo ""
+    return
+  fi
+  echo "$default_path"
 }
 
 flyway_location_for() {
-  if [[ "$1" == "auth" ]]; then
-    echo "classpath:db/migration"
-    return
-  fi
-  echo "classpath:db/migration/$1"
+  catalog_field_for "$1" 9 || true
+}
+
+source_key_for() {
+  catalog_field_for "$1" 8 || true
 }
 
 append_unique() {
@@ -244,6 +198,7 @@ collect_module() {
 build_plan() {
   local module
   local default_path
+  local source_key
 
   for module in "${REQUESTED_MODULES[@]}"; do
     collect_module "$module"
@@ -270,8 +225,9 @@ build_plan() {
     if ! array_contains "$module" "${REQUESTED_MODULES[@]}"; then
       append_unique ADDITIONAL_MODULES "$module"
     fi
-    append_unique BACKEND_MODULES "module/backend/module-$module"
-    append_unique FRONTEND_FEATURES "module/frontend-web/src/features/$module"
+    source_key="$(source_key_for "$module")"
+    append_unique BACKEND_MODULES "module/backend/module-$source_key"
+    append_unique FRONTEND_FEATURES "module/frontend-web/src/features/$source_key"
     append_unique FLYWAY_LOCATIONS "$(flyway_location_for "$module")"
     default_path="$(default_path_for "$module")"
     if [[ -n "$default_path" ]]; then
@@ -390,6 +346,7 @@ print_json_modules() {
   local module
   local first_module="true"
   local dependencies
+  local source_key
 
   printf '  "modules": [\n'
   for module in "${REQUIRED_MODULES[@]}"; do
@@ -397,6 +354,7 @@ print_json_modules() {
       printf ',\n'
     fi
     dependencies="$(dependencies_for "$module")"
+    source_key="$(source_key_for "$module")"
     printf '    {\n'
     printf '      "module": '
     json_quote "$module"
@@ -408,10 +366,10 @@ print_json_modules() {
     print_json_array_values $dependencies
     printf ',\n'
     printf '      "backendModule": '
-    json_quote "module/backend/module-$module"
+    json_quote "module/backend/module-$source_key"
     printf ',\n'
     printf '      "frontendFeature": '
-    json_quote "module/frontend-web/src/features/$module"
+    json_quote "module/frontend-web/src/features/$source_key"
     printf ',\n'
     printf '      "flywayLocation": '
     json_quote "$(flyway_location_for "$module")"
@@ -563,6 +521,7 @@ while [[ "$#" -gt 0 ]]; do
       shift
       ;;
     --list)
+      ensure_catalog_file
       print_list
       exit 0
       ;;
@@ -577,6 +536,8 @@ while [[ "$#" -gt 0 ]]; do
       ;;
   esac
 done
+
+ensure_catalog_file
 
 if [[ "$MODULES_INPUT" == "__all__" ]]; then
   select_all_modules

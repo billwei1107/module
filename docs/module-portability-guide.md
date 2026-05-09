@@ -110,5 +110,5 @@ docker compose -f module/docker/local/docker-compose.yml config
 
 - 修復通用模組 bug 後，必須回寫母體倉庫並 commit/push。
 - 新增通用功能時，先評估是否應抽回母體，而不是只留在客製專案。
-- `scripts/module-export.sh` 的依賴關係需與 `module-system` 的 Feature Toggle 清冊保持一致。
+- `module/backend/module-system/src/main/resources/module-catalog.tsv` 是模組清冊單一來源，`module-system` Feature Toggle 與 `scripts/module-export.sh` 都會讀取它。
 - 搬移後若修改目標專案 UI，仍應保留 API contract、型別與模組 key 的相容性。
