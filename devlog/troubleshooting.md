@@ -135,3 +135,11 @@
 **原因分析**: 多數業務模組的 migration 位於 `db/migration/[module]`，但 `module-auth` 的 migration 位於根 `db/migration`，這是現有 Flyway locations 的正確配置。測試條件過度假設每個模組都必定有子目錄。
 **Solution**: 將清冊中的 Flyway location 改為每個模組明確宣告，並把測試條件放寬為 `classpath:db/migration` 前綴，同時保留 `auth` 必須等於 `classpath:db/migration` 的精準斷言。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-module-catalog-auth-flyway-location.md`
+
+## 2026-05-09 - Bash 空陣列搭配 nounset 造成搬移腳本中止
+
+### 問題: `REQUESTED_MODULES[@]: unbound variable`
+**Issue**: 新增 `scripts/module-export.sh` 後執行 `scripts/module-export.sh --modules payroll`，腳本在 `append_unique` 讀取空陣列時中止，錯誤為 `scripts/module-export.sh: line 176: REQUESTED_MODULES[@]: unbound variable`。
+**原因分析**: macOS 預設 Bash 3.2 在 `set -u` / nounset 模式下，對尚無元素的陣列執行 `"${ARRAY[@]}"` 可能被視為未綁定變數。搬移腳本需要在多個空陣列上累加模組清單，因此 strict nounset 會讓首次 append 失敗。
+**Solution**: 將腳本開頭由 `set -euo pipefail` 調整為 `set -eo pipefail`，保留錯誤中止與 pipefail，但避免 Bash 3.2 空陣列 nounset 問題。修正後 `bash -n scripts/module-export.sh`、`--modules payroll`、`--format rsync` 與 `--execute` 複製 smoke test 均通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-bash-empty-array-nounset.md`

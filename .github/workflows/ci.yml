@@ -72,6 +72,36 @@ jobs:
       - name: Validate local compose config
         run: docker compose -f module/docker/local/docker-compose.yml config
 
+  module-export:
+    name: Module Export Script
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate script syntax
+        run: bash -n scripts/module-export.sh
+
+      - name: Validate payroll dependency plan
+        run: |
+          scripts/module-export.sh --modules payroll > /tmp/module-export-plan.txt
+          grep -q "module/backend/module-payroll" /tmp/module-export-plan.txt
+          grep -q "module/backend/module-leave" /tmp/module-export-plan.txt
+          grep -q "classpath:db/migration/payroll" /tmp/module-export-plan.txt
+
+      - name: Validate rsync command output
+        run: |
+          scripts/module-export.sh --modules CRM,unknown-module --format rsync --target /tmp/module-target > /tmp/module-export-rsync.txt
+          grep -q "Unknown modules were ignored: unknown-module" /tmp/module-export-rsync.txt
+          grep -q "module/frontend-web/src/features/crm" /tmp/module-export-rsync.txt
+
+      - name: Validate execute copy smoke
+        run: |
+          scripts/module-export.sh --modules crm --target /tmp/module-export-copy --execute
+          test -d /tmp/module-export-copy/module/backend/module-crm
+          test -d /tmp/module-export-copy/module/backend/module-auth
+          test -d /tmp/module-export-copy/module/frontend-web/src/features/crm
+
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
@@ -79,6 +109,7 @@ jobs:
       - backend
       - frontend
       - compose
+      - module-export
     steps:
       - name: Checkout
         uses: actions/checkout@v6
