@@ -89,3 +89,11 @@
 **原因分析**: Spring Boot 會將 base `application.yml` 與 profile-specific YAML 合併；profile 只覆寫有宣告的 key，未宣告的 map key 不會自動變成 false。因此模組化母體若在 base 開啟多數模組，業態 profile 必須明確列出全部 `modules.*`。
 **Solution**: 補齊 cafe、fastfood、restaurant、retail、chain-hq 五個 profile 的 17 個模組開關，避免隱式繼承 base 預設。並在 `ModuleFeatureToggleMetadataTest` 新增 profile 完整性測試與依賴一致性測試，確保每個 profile 明確宣告所有模組，且 `payroll`、`leave`、`finance`、`meeting` 等依賴組合不會被拆壞。修正後 `mvn test -pl app -am` 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-spring-profile-module-toggle-inheritance.md`
+
+## 2026-05-09 - Playwright API mock 過寬攔截 Vite source module
+
+### 問題: Vite module script 被 mock 成 JSON
+**Issue**: 前端 Feature Toggle browser test 初跑時頁面 body 為空，console 顯示 `Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "application/json"`。
+**原因分析**: 臨時測試使用 `page.route('**/api/**')` 作為後端 API fallback mock，但 Vite 會載入 `/src/features/system/api/systemApi.ts`，路徑中也包含 `/api/`，因此 source module 被 Playwright route 攔截並回傳 JSON。
+**Solution**: 將 mock pattern 限縮為 `**/api/v1/**` 與 `**/api/api/v1/**`，避免攔截 `/src/**` source module；並將 feature endpoint 的 route 註冊在 fallback 後面，確保較精準的 mock 優先處理。修正後 Playwright browser script 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-playwright-api-mock-overmatches-vite-source.md`
