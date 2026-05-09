@@ -165,17 +165,20 @@ jobs:
           test -d /tmp/module-export-copy/module/backend/module-auth
           test -d /tmp/module-export-copy/module/frontend-web/src/features/crm
 
-      - name: Validate portable CRM import build
+      - name: Validate portable import builds
         run: |
-          rm -rf /tmp/module-import-crm-smoke
-          scripts/module-export.sh --modules crm --target /tmp/module-import-crm-smoke --execute
-          test ! -d /tmp/module-import-crm-smoke/module/backend/app/target
-          grep -q "<module>module-crm</module>" /tmp/module-import-crm-smoke/module/backend/pom.xml
-          ! grep -q "<module>module-payroll</module>" /tmp/module-import-crm-smoke/module/backend/pom.xml
-          mvn -f /tmp/module-import-crm-smoke/module/backend/pom.xml test
-          cd /tmp/module-import-crm-smoke/module/frontend-web
-          npm ci
-          npm run build
+          for module in crm payroll; do
+            target="/tmp/module-import-${module}-smoke"
+            rm -rf "$target"
+            scripts/module-export.sh --modules "$module" --target "$target" --execute
+            test ! -d "$target/module/backend/app/target"
+            grep -q "<module>module-${module}</module>" "$target/module/backend/pom.xml"
+            mvn -f "$target/module/backend/pom.xml" test
+            cd "$target/module/frontend-web"
+            npm ci
+            npm run build
+            cd "$GITHUB_WORKSPACE"
+          done
 
   docs:
     name: Documentation Checks
