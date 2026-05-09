@@ -10,6 +10,7 @@ All notable changes to the enterprise modular component repository are recorded 
 - Added generated `module/MODULE_BUNDLE.md` with human-readable source metadata, included modules, and required verification commands.
 - Added `scripts/module-verify-import.sh` to validate imported bundles with manifest checks, backend tests, frontend audit/build, and Docker Compose config validation.
 - Added `scripts/module-manifest-diff.sh` to compare existing and newly exported bundle manifests before upgrades.
+- Added `scripts/module-release-check.sh` to run the formal release readiness gate before cross-project imports.
 - Added `scripts/module-export.sh --require-clean` to refuse formal exports when the source repository has local changes.
 - Added Markdown module catalog generation from `module-catalog.tsv`.
 - Added CI checks for portable imports of `crm` and `payroll` bundles.

@@ -174,3 +174,11 @@
 **原因分析**: portable manifest 是機器可讀格式，直接用文字 diff 會受到欄位排序與 JSON 結構影響，審核者需要手動解讀清單變化，升級既有專案時容易漏看資料庫 migration 或依賴模組變更。
 **Solution**: 新增 `scripts/module-manifest-diff.sh`，讀取兩份 manifest 後輸出結構化差異，包含 requested/required/additional modules、backendModules、frontendFeatures、flywayLocations、defaultPaths、supportPaths、copyPaths 的 added/removed。支援 `--format json` 給 CI 或其他工具使用。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-portable-manifest-upgrade-diff.md`
+
+## 2026-05-09 - macOS mktemp template suffix 不相容
+
+### 問題: release check 在 macOS 產生 catalog 暫存檔失敗
+**Issue**: 執行 `scripts/module-release-check.sh --modules crm --target /tmp/module-release-check-strict --skip-backend --skip-frontend --skip-compose` 時出現 `mktemp: mkstemp failed ... module-catalog.XXXXXX.md: File exists`。
+**原因分析**: macOS/BSD `mktemp` 要求 template 的 `X` 佔位符位於尾端；`module-catalog.XXXXXX.md` 在 `XXXXXX` 後仍有副檔名，因此無法正確產生唯一暫存檔。
+**Solution**: 將 release check 的 catalog 暫存 template 改為 `module-catalog.XXXXXX`，移除尾端副檔名，讓 macOS/BSD 與 Linux GNU `mktemp` 都能產生暫存檔。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-macos-mktemp-template-suffix.md`

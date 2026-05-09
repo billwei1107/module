@@ -100,6 +100,7 @@ jobs:
         run: |
           bash -n scripts/module-export.sh
           bash -n scripts/module-manifest-diff.sh
+          bash -n scripts/module-release-check.sh
           bash -n scripts/module-verify-import.sh
 
       - name: Validate module catalog resource
@@ -220,6 +221,12 @@ jobs:
           assert "payroll" in diff["changes"]["requiredModules"]["added"]
           PY
 
+      - name: Validate release check smoke
+        run: |
+          scripts/module-release-check.sh --modules crm --target /tmp/module-release-check-smoke --skip-backend --skip-frontend --skip-compose
+          test -f /tmp/module-release-check-smoke/module/module-bundle-manifest.json
+          grep -q '"dirty": false' /tmp/module-release-check-smoke/module/module-bundle-manifest.json
+
       - name: Validate portable import builds
         run: |
           for module in crm payroll; do
@@ -248,6 +255,7 @@ jobs:
           grep -q "scripts/module-export.sh --all --format markdown" docs/module-portability-guide.md
           grep -q "module/module-bundle-manifest.json" docs/module-portability-guide.md
           grep -q "scripts/module-manifest-diff.sh" docs/module-portability-guide.md
+          grep -q "scripts/module-release-check.sh" docs/module-portability-guide.md
           grep -q "scripts/module-verify-import.sh --target" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --format config" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --target /path/to/target-project --execute" docs/module-portability-guide.md
@@ -255,6 +263,7 @@ jobs:
           grep -q "npm audit --audit-level=high" docs/module-portability-guide.md
           grep -q "module-verify-import.sh" docs/module-release-guide.md
           grep -q "module-manifest-diff.sh" docs/module-release-guide.md
+          grep -q "module-release-check.sh" docs/module-release-guide.md
           grep -q "module-vYYYY.MM.DD.N" docs/module-release-guide.md
           grep -q "source.shortCommit" docs/module-release-guide.md
           grep -q "module-bundle-manifest.json" CHANGELOG.md

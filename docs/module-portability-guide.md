@@ -169,4 +169,5 @@ scripts/module-manifest-diff.sh \
 - `module/backend/module-system/src/main/resources/module-catalog.tsv` 是模組清冊單一來源，`module-system` Feature Toggle 與 `scripts/module-export.sh` 都會讀取它。
 - 搬移後若修改目標專案 UI，仍應保留 API contract、型別與模組 key 的相容性。
 - 正式交付或跨專案導入前，請確認 `module/module-bundle-manifest.json` 的 `source.dirty` 為 `false`，並在目標專案提交訊息或 devlog 中記錄 `source.shortCommit`。
+- 從母體發布可導入基線前，先執行 `scripts/module-release-check.sh --modules <module-list>`。
 - 發布 tag、正式導入與升級流程請參考 `docs/module-release-guide.md`。

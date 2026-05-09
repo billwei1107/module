@@ -7,11 +7,10 @@
 正式導入其他專案前，母體倉庫必須位於乾淨的開發分支或已審核的 release commit：
 
 ```bash
-git status --short --branch
-mvn -f module/backend/pom.xml test
-cd module/frontend-web && npm ci && npm audit --audit-level=high && npm run lint -- --max-warnings=0 && npm run build
-docker compose -f module/docker/local/docker-compose.yml config
+scripts/module-release-check.sh --modules payroll
 ```
+
+這個檢查會驗證目前不在 `main/master`、工作樹乾淨、catalog 文件與 TSV 同步、後端測試、前端 audit/lint/build、Docker Compose config、portable bundle 匯出與導入後驗收。
 
 建議 tag 格式：
 
@@ -21,6 +20,12 @@ git push origin module-vYYYY.MM.DD.N
 ```
 
 若尚未建立 tag，也可以使用 `module/module-bundle-manifest.json` 的 `source.shortCommit` 作為導入基準，但正式交付仍建議使用 tag。
+
+若只想在 CI 或開發中驗證 release gate 腳本與匯出流程，可使用 skip 選項；正式交付不得使用 `--allow-dirty-source`：
+
+```bash
+scripts/module-release-check.sh --modules crm --skip-backend --skip-frontend --skip-compose
+```
 
 ## 2. 匯出 Bundle
 
