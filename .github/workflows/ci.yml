@@ -128,6 +128,21 @@ jobs:
           test -d /tmp/module-export-copy/module/backend/module-auth
           test -d /tmp/module-export-copy/module/frontend-web/src/features/crm
 
+  docs:
+    name: Documentation Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate module portability guide
+        run: |
+          test -f docs/module-portability-guide.md
+          grep -q "scripts/module-export.sh --modules payroll --format json" docs/module-portability-guide.md
+          grep -q "scripts/module-export.sh --modules payroll --format config" docs/module-portability-guide.md
+          grep -q "scripts/module-export.sh --modules payroll --target /path/to/target-project --execute" docs/module-portability-guide.md
+          grep -q "mvn test" docs/module-portability-guide.md
+
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
@@ -136,6 +151,7 @@ jobs:
       - frontend
       - compose
       - module-export
+      - docs
     steps:
       - name: Checkout
         uses: actions/checkout@v6
