@@ -39,6 +39,7 @@
         <module>module-document</module>
         <module>module-report</module>
         <module>module-crm</module>
+        <module>module-inventory</module>
         <module>app</module>
     </modules>
 
