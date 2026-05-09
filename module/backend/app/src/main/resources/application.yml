@@ -21,7 +21,8 @@ spring:
       classpath:db/migration/leave,
       classpath:db/migration/system,
       classpath:db/migration/audit,
-      classpath:db/migration/finance
+      classpath:db/migration/finance,
+      classpath:db/migration/payroll
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -46,6 +47,7 @@ modules:
   system: true
   audit: true
   finance: true
+  payroll: true
 
 pos:
   auth:

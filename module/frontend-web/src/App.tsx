@@ -26,6 +26,7 @@ import { LeaveApprovalPage } from './features/leave/pages/LeaveApprovalPage';
 import { SystemSettingsPage } from './features/system/pages/SystemSettingsPage';
 import { AuditLogPage } from './features/audit/pages/AuditLogPage';
 import { FinanceDashboardPage } from './features/finance/pages/FinanceDashboardPage';
+import { PayrollDashboardPage } from './features/payroll/pages/PayrollDashboardPage';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -46,6 +47,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
         <Button color="inherit" component={Link} to="/system">系統設定</Button>
         <Button color="inherit" component={Link} to="/audit/logs">稽核日誌</Button>
         <Button color="inherit" component={Link} to="/finance">財務</Button>
+        <Button color="inherit" component={Link} to="/payroll">薪資</Button>
         <Button color="inherit" component={Link} to="/login">登出</Button>
       </Toolbar>
     </AppBar>
@@ -80,6 +82,7 @@ function App() {
           <Route path="/system" element={<AppLayout><SystemSettingsPage /></AppLayout>} />
           <Route path="/audit/logs" element={<AppLayout><AuditLogPage /></AppLayout>} />
           <Route path="/finance" element={<AppLayout><FinanceDashboardPage /></AppLayout>} />
+          <Route path="/payroll" element={<AppLayout><PayrollDashboardPage /></AppLayout>} />
 
           {/* 預設導向登入頁面 */}
           <Route path="/" element={<Navigate to="/department" replace />} />
