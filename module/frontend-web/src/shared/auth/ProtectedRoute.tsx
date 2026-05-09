@@ -3,7 +3,7 @@
  * @description 路由守衛組件，未登入自動導向登入頁 / Route guard component
  */
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '@shared/store/authStore';
+import { useAuthStore } from '../store/authStore';
 import type { ReactNode } from 'react';
 
 interface ProtectedRouteProps {

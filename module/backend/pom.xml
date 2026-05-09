@@ -30,6 +30,8 @@
         <module>module-workflow</module>
         <module>module-notification</module>
         <module>module-attendance</module>
+        <module>module-leave</module>
+        <module>module-system</module>
         <module>app</module>
     </modules>
 

@@ -3,12 +3,16 @@ import { Box, Typography, Card, CardContent } from '@mui/material';
 import { organizationApi } from '../api/organizationApi';
 import type { Company } from '../types';
 
+const normalizeList = <T,>(payload: T[] | { data?: T[] }): T[] => {
+    return Array.isArray(payload) ? payload : payload.data || [];
+};
+
 export const CompanyPage = () => {
     const [companies, setCompanies] = useState<Company[]>([]);
 
     useEffect(() => {
         organizationApi.getCompanies().then(res => {
-            setCompanies(res.data || []);
+            setCompanies(normalizeList<Company>(res));
         }).catch(console.error);
     }, []);
 

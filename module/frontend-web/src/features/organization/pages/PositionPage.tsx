@@ -3,12 +3,16 @@ import { Box, Typography, List, ListItem, ListItemText } from '@mui/material';
 import { organizationApi } from '../api/organizationApi';
 import type { Position } from '../types';
 
+const normalizeList = <T,>(payload: T[] | { data?: T[] }): T[] => {
+    return Array.isArray(payload) ? payload : payload.data || [];
+};
+
 export const PositionPage = () => {
     const [positions, setPositions] = useState<Position[]>([]);
 
     useEffect(() => {
         organizationApi.getPositions().then(res => {
-            setPositions(res.data || []);
+            setPositions(normalizeList<Position>(res));
         }).catch(console.error);
     }, []);
 

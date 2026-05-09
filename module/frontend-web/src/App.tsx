@@ -21,6 +21,9 @@ import { ClockInPage } from './features/attendance/pages/ClockInPage';
 import { AttendanceRecordsPage } from './features/attendance/pages/AttendanceRecordsPage';
 import { ShiftManagementPage } from './features/attendance/pages/ShiftManagementPage';
 import { AttendanceReportPage } from './features/attendance/pages/AttendanceReportPage';
+import { LeaveRequestPage } from './features/leave/pages/LeaveRequestPage';
+import { LeaveApprovalPage } from './features/leave/pages/LeaveApprovalPage';
+import { SystemSettingsPage } from './features/system/pages/SystemSettingsPage';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -36,6 +39,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
         <Button color="inherit" component={Link} to="/my-tasks">我的待辦</Button>
         <Button color="inherit" component={Link} to="/attendance/clock-in">打卡</Button>
         <Button color="inherit" component={Link} to="/attendance/records">出勤記錄</Button>
+        <Button color="inherit" component={Link} to="/leave/requests">請假</Button>
+        <Button color="inherit" component={Link} to="/leave/approval">請假審核</Button>
+        <Button color="inherit" component={Link} to="/system">系統設定</Button>
         <Button color="inherit" component={Link} to="/login">登出</Button>
       </Toolbar>
     </AppBar>
@@ -65,6 +71,9 @@ function App() {
           <Route path="/attendance/records" element={<AppLayout><AttendanceRecordsPage /></AppLayout>} />
           <Route path="/attendance/shifts" element={<AppLayout><ShiftManagementPage /></AppLayout>} />
           <Route path="/attendance/report" element={<AppLayout><AttendanceReportPage /></AppLayout>} />
+          <Route path="/leave/requests" element={<AppLayout><LeaveRequestPage /></AppLayout>} />
+          <Route path="/leave/approval" element={<AppLayout><LeaveApprovalPage /></AppLayout>} />
+          <Route path="/system" element={<AppLayout><SystemSettingsPage /></AppLayout>} />
 
           {/* 預設導向登入頁面 */}
           <Route path="/" element={<Navigate to="/department" replace />} />

@@ -2,7 +2,7 @@
  * @file usePermission.ts
  * @description 權限檢查 Hook / Permission check hook
  */
-import { useAuthStore } from '@shared/store/authStore';
+import { useAuthStore } from '../store/authStore';
 
 export function usePermission() {
   const user = useAuthStore(state => state.user);

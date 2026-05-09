@@ -50,7 +50,7 @@ export const NotificationBell: React.FC = () => {
 
     return (
         <>
-            <IconButton color="inherit" onClick={handleClick} aria-describedby={id}>
+            <IconButton color="inherit" onClick={handleClick} aria-describedby={id} aria-label="通知中心">
                 <Badge badgeContent={unreadCount} color="error">
                     <NotificationsIcon />
                 </Badge>

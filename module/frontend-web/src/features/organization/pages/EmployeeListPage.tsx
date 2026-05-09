@@ -4,12 +4,16 @@ import { EmployeeTable } from '../components/EmployeeTable';
 import { organizationApi } from '../api/organizationApi';
 import type { Employee } from '../types';
 
+const normalizeList = <T,>(payload: T[] | { data?: T[] }): T[] => {
+    return Array.isArray(payload) ? payload : payload.data || [];
+};
+
 export const EmployeeListPage = () => {
     const [employees, setEmployees] = useState<Employee[]>([]);
 
     useEffect(() => {
         organizationApi.getEmployees().then(res => {
-            setEmployees(res.data || []);
+            setEmployees(normalizeList<Employee>(res));
         }).catch(console.error);
     }, []);
 

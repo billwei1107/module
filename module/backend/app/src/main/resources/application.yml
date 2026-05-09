@@ -17,7 +17,9 @@ spring:
       classpath:db/migration/organization,
       classpath:db/migration/workflow,
       classpath:db/migration/notification,
-      classpath:db/migration/attendance
+      classpath:db/migration/attendance,
+      classpath:db/migration/leave,
+      classpath:db/migration/system
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -39,6 +41,7 @@ modules:
   notification: false
   attendance: false
   leave: false
+  system: true
   finance: false
 
 pos:

@@ -5,6 +5,10 @@ import { EmployeeTable } from '../components/EmployeeTable';
 import { organizationApi } from '../api/organizationApi';
 import type { DepartmentTreeDTO, Employee } from '../types';
 
+const normalizeList = <T,>(payload: T[] | { data?: T[] }): T[] => {
+    return Array.isArray(payload) ? payload : payload.data || [];
+};
+
 export const DepartmentPage = () => {
     const [treeData, setTreeData] = useState<DepartmentTreeDTO[]>([]);
     const [employees, setEmployees] = useState<Employee[]>([]);
@@ -15,14 +19,14 @@ export const DepartmentPage = () => {
         // It should be fetched from user session context.
         const companyId = 'edcc0fa6-17b5-47e1-ae76-78b172a1cd34';
         organizationApi.getDepartmentTree(companyId)
-            .then(res => setTreeData(res.data || []))
+            .then(res => setTreeData(normalizeList<DepartmentTreeDTO>(res)))
             .catch(console.error);
     }, []);
 
     const handleSelectDepartment = (deptId: string) => {
         setLoading(true);
         organizationApi.getEmployees({ departmentId: deptId })
-            .then(res => setEmployees(res.data || []))
+            .then(res => setEmployees(normalizeList<Employee>(res)))
             .catch(console.error)
             .finally(() => setLoading(false));
     };

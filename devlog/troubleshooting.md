@@ -23,3 +23,21 @@
 **Issue**: `Connection to postgres:15432 refused` 與 Axios Timeout 10000ms。
 **原因分析**: 外部 `.env` 將 `POSTGRES_PORT` 導向本機 15432 方便查驗，但後端 docker 吃此變量後導致於虛擬內網向 postgres 發送 15432 的請求，實際內部僅開啟 5432 埠。後端死亡導致 Nginx 回報 502/10000ms timeout。
 **Solution**: 於 `docker-compose.yml` 之 `backend` service 的 `environment` 直接霸王覆蓋 `- POSTGRES_PORT=5432` 與宣告 `- DB_HOST=postgres`。
+
+## 2026-05-09 - 後端缺少 Maven Wrapper
+
+### 問題: `./mvnw` 不存在
+**Issue**: 在 `module/backend` 執行 `./mvnw test` 時出現 `zsh:1: no such file or directory: ./mvnw`。
+**原因分析**: 後端模組目前沒有提交 Maven Wrapper 檔案，不能使用 `./mvnw` 作為驗證入口。
+**Solution**: 改用系統 Maven 執行 `mvn test`，後端全模組測試通過。此問題已同步寫入 Obsidian raw 與 ai-kb：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-missing-maven-wrapper.md`
+- `~/ai-kb/kb/60-errors/backend/2026-05-09-missing-maven-wrapper.md`
+
+## 2026-05-09 - Vite 瀏覽器環境缺少 global
+
+### 問題: `global is not defined`
+**Issue**: Playwright 開啟 `/leave/requests` 時頁面 body 為空，console 顯示 `pageerror global is not defined`。
+**原因分析**: `sockjs-client` 等瀏覽器端依賴引用 Node 風格的 `global` 變數，但 Vite 瀏覽器 runtime 預設沒有提供該全域變數。
+**Solution**: 在 `module/frontend-web/vite.config.ts` 加入 `define: { global: 'globalThis' }`。修復後 `npx tsc -b`、`npm run build` 與 Playwright 互動測試皆通過。此問題已同步寫入 Obsidian raw 與 ai-kb：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-vite-global-is-not-defined.md`
+- `~/ai-kb/kb/60-errors/frontend/2026-05-09-vite-global-is-not-defined.md`

@@ -48,6 +48,18 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.enterprise</groupId>
+            <artifactId>module-leave</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.enterprise</groupId>
+            <artifactId>module-system</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Database Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
