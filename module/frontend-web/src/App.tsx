@@ -32,6 +32,7 @@ import { DocumentDashboardPage } from './features/document/pages/DocumentDashboa
 import { ReportDashboardPage } from './features/report/pages/ReportDashboardPage';
 import { CrmDashboardPage } from './features/crm/pages/CrmDashboardPage';
 import { InventoryDashboardPage } from './features/inventory/pages/InventoryDashboardPage';
+import { MeetingDashboardPage } from './features/meeting/pages/MeetingDashboardPage';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <Box sx={{ flexGrow: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -58,6 +59,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
         <Button color="inherit" component={Link} to="/reports">報表</Button>
         <Button color="inherit" component={Link} to="/crm">客戶</Button>
         <Button color="inherit" component={Link} to="/inventory">庫存</Button>
+        <Button color="inherit" component={Link} to="/meetings">會議</Button>
         <Button color="inherit" component={Link} to="/login">登出</Button>
       </Toolbar>
     </AppBar>
@@ -98,6 +100,7 @@ function App() {
           <Route path="/reports" element={<AppLayout><ReportDashboardPage /></AppLayout>} />
           <Route path="/crm" element={<AppLayout><CrmDashboardPage /></AppLayout>} />
           <Route path="/inventory" element={<AppLayout><InventoryDashboardPage /></AppLayout>} />
+          <Route path="/meetings" element={<AppLayout><MeetingDashboardPage /></AppLayout>} />
 
           {/* 預設導向登入頁面 */}
           <Route path="/" element={<Navigate to="/department" replace />} />

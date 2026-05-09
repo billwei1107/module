@@ -40,6 +40,7 @@
         <module>module-report</module>
         <module>module-crm</module>
         <module>module-inventory</module>
+        <module>module-meeting</module>
         <module>app</module>
     </modules>
 

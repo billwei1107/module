@@ -27,7 +27,8 @@ spring:
       classpath:db/migration/document,
       classpath:db/migration/report,
       classpath:db/migration/crm,
-      classpath:db/migration/inventory
+      classpath:db/migration/inventory,
+      classpath:db/migration/meeting
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -58,6 +59,7 @@ modules:
   report: true
   crm: true
   inventory: true
+  meeting: true
 
 pos:
   auth:
