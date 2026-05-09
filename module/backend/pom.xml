@@ -35,6 +35,7 @@
         <module>module-audit</module>
         <module>module-finance</module>
         <module>module-payroll</module>
+        <module>module-project</module>
         <module>app</module>
     </modules>
 

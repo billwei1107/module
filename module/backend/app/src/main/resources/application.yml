@@ -22,7 +22,8 @@ spring:
       classpath:db/migration/system,
       classpath:db/migration/audit,
       classpath:db/migration/finance,
-      classpath:db/migration/payroll
+      classpath:db/migration/payroll,
+      classpath:db/migration/project
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -48,6 +49,7 @@ modules:
   audit: true
   finance: true
   payroll: true
+  project: true
 
 pos:
   auth:
