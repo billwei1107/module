@@ -22,29 +22,33 @@ import {
 } from '@mui/material';
 import {
     getDictionaries,
+    getFeatureDependencyIssues,
     getFeatureToggles,
     getNextSequence,
     getSystemConfigs,
     upsertSystemConfig,
 } from '../api/systemApi';
-import type { Dictionary, FeatureToggle, SystemConfig } from '../types';
+import type { Dictionary, FeatureDependencyIssue, FeatureToggle, SystemConfig } from '../types';
 
 export const SystemSettingsPage = () => {
     const [configs, setConfigs] = useState<SystemConfig[]>([]);
     const [features, setFeatures] = useState<FeatureToggle[]>([]);
+    const [dependencyIssues, setDependencyIssues] = useState<FeatureDependencyIssue[]>([]);
     const [dictionaries, setDictionaries] = useState<Dictionary[]>([]);
     const [systemName, setSystemName] = useState('模塊化企業系統');
     const [sequence, setSequence] = useState('');
     const [message, setMessage] = useState('');
 
     const loadData = async () => {
-        const [configResult, featureResult, dictionaryResult] = await Promise.all([
+        const [configResult, featureResult, dependencyIssueResult, dictionaryResult] = await Promise.all([
             getSystemConfigs(),
             getFeatureToggles(),
+            getFeatureDependencyIssues(),
             getDictionaries(),
         ]);
         setConfigs(configResult);
         setFeatures(featureResult);
+        setDependencyIssues(dependencyIssueResult);
         setDictionaries(dictionaryResult);
         const nameConfig = configResult.find((config) => config.key === 'system.name');
         if (nameConfig) {
@@ -131,6 +135,15 @@ export const SystemSettingsPage = () => {
                         />
                     ))}
                 </Box>
+                {dependencyIssues.length > 0 && (
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                        {dependencyIssues.map((issue) => (
+                            <Typography key={issue.module} variant="body2">
+                                {issue.displayName} 缺少依賴：{issue.missingDependencies.join(', ')}
+                            </Typography>
+                        ))}
+                    </Alert>
+                )}
             </Paper>
 
             <Paper sx={{ p: 3 }}>

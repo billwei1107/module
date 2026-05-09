@@ -1,5 +1,6 @@
 package com.enterprise.system.service.impl;
 
+import com.enterprise.system.dto.FeatureDependencyIssueDTO;
 import com.enterprise.system.dto.FeatureToggleDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
@@ -73,5 +74,42 @@ class FeatureToggleServiceImplTest {
             assertThat(feature.getModule()).isEqualTo("auth");
             assertThat(feature.getFlywayLocation()).isEqualTo("classpath:db/migration");
         });
+    }
+
+    @Test
+    void getDependencyIssuesShouldReportEnabledModulesWithDisabledDependencies() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("modules.auth", "true")
+                .withProperty("modules.organization", "true")
+                .withProperty("modules.payroll", "true")
+                .withProperty("modules.attendance", "false")
+                .withProperty("modules.leave", "false")
+                .withProperty("modules.finance", "false");
+
+        FeatureToggleServiceImpl service = new FeatureToggleServiceImpl(environment);
+        List<FeatureDependencyIssueDTO> issues = service.getDependencyIssues();
+
+        assertThat(issues).singleElement().satisfies(issue -> {
+            assertThat(issue.getModule()).isEqualTo("payroll");
+            assertThat(issue.getDisplayName()).isEqualTo("薪資管理");
+            assertThat(issue.getMissingDependencies()).containsExactly("attendance", "leave", "finance");
+            assertThat(issue.getMessage()).contains("payroll requires enabled modules");
+        });
+    }
+
+    @Test
+    void getDependencyIssuesShouldReturnEmptyListWhenEnabledModulesAreConsistent() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("modules.auth", "true")
+                .withProperty("modules.organization", "true")
+                .withProperty("modules.workflow", "true")
+                .withProperty("modules.attendance", "true")
+                .withProperty("modules.leave", "true")
+                .withProperty("modules.finance", "true")
+                .withProperty("modules.payroll", "true");
+
+        FeatureToggleServiceImpl service = new FeatureToggleServiceImpl(environment);
+
+        assertThat(service.getDependencyIssues()).isEmpty();
     }
 }

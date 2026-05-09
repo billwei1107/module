@@ -26,6 +26,13 @@ export interface FeatureToggle {
     dependencies?: string[];
 }
 
+export interface FeatureDependencyIssue {
+    module: string;
+    displayName: string;
+    missingDependencies: string[];
+    message: string;
+}
+
 export interface DictionaryItem {
     id: string;
     dictionaryId: string;

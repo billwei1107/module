@@ -5,7 +5,7 @@
  */
 
 import axiosInstance from '../../../shared/api/axiosInstance';
-import type { Dictionary, FeatureToggle, SystemConfig, UpdateSystemConfigRequest } from '../types';
+import type { Dictionary, FeatureDependencyIssue, FeatureToggle, SystemConfig, UpdateSystemConfigRequest } from '../types';
 
 interface ApiEnvelope<T> {
     data: T;
@@ -37,6 +37,11 @@ export const upsertSystemConfig = async (data: UpdateSystemConfigRequest): Promi
 export const getFeatureToggles = async (): Promise<FeatureToggle[]> => {
     const response = await axiosInstance.get('/api/v1/system/features');
     return unwrapData<FeatureToggle[]>(response as ApiEnvelope<FeatureToggle[]>);
+};
+
+export const getFeatureDependencyIssues = async (): Promise<FeatureDependencyIssue[]> => {
+    const response = await axiosInstance.get('/api/v1/system/features/dependency-issues');
+    return unwrapData<FeatureDependencyIssue[]>(response as ApiEnvelope<FeatureDependencyIssue[]>);
 };
 
 // ========================================

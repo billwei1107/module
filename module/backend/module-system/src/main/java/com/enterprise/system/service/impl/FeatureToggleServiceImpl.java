@@ -1,5 +1,6 @@
 package com.enterprise.system.service.impl;
 
+import com.enterprise.system.dto.FeatureDependencyIssueDTO;
 import com.enterprise.system.dto.FeatureToggleDTO;
 import com.enterprise.system.service.FeatureToggleService;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +64,15 @@ public class FeatureToggleServiceImpl implements FeatureToggleService {
                 .toList();
     }
 
+    @Override
+    public List<FeatureDependencyIssueDTO> getDependencyIssues() {
+        return MODULE_DEFINITIONS.stream()
+                .filter(definition -> isEnabled(definition.module()))
+                .map(this::toDependencyIssue)
+                .filter(issue -> !issue.getMissingDependencies().isEmpty())
+                .toList();
+    }
+
     // ========================================
     // 清冊轉換 / Catalog Mapping
     // ========================================
@@ -80,6 +90,32 @@ public class FeatureToggleServiceImpl implements FeatureToggleService {
                 .defaultPath(definition.defaultPath())
                 .dependencies(definition.dependencies())
                 .build();
+    }
+
+    // ========================================
+    // 依賴檢查 / Dependency Validation
+    // ========================================
+    private FeatureDependencyIssueDTO toDependencyIssue(ModuleDefinition definition) {
+        List<String> missingDependencies = definition.dependencies().stream()
+                .filter(dependency -> !isEnabled(dependency))
+                .toList();
+        return FeatureDependencyIssueDTO.builder()
+                .module(definition.module())
+                .displayName(definition.displayName())
+                .missingDependencies(missingDependencies)
+                .message(buildDependencyMessage(definition, missingDependencies))
+                .build();
+    }
+
+    private boolean isEnabled(String module) {
+        return environment.getProperty("modules." + module, Boolean.class, false);
+    }
+
+    private String buildDependencyMessage(ModuleDefinition definition, List<String> missingDependencies) {
+        if (missingDependencies.isEmpty()) {
+            return "";
+        }
+        return definition.module() + " requires enabled modules: " + String.join(", ", missingDependencies);
     }
 
     private record ModuleDefinition(

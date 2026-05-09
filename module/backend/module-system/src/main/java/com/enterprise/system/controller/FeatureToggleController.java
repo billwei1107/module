@@ -1,6 +1,7 @@
 package com.enterprise.system.controller;
 
 import com.enterprise.common.dto.ApiResponse;
+import com.enterprise.system.dto.FeatureDependencyIssueDTO;
 import com.enterprise.system.dto.FeatureToggleDTO;
 import com.enterprise.system.service.FeatureToggleService;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,10 @@ public class FeatureToggleController {
     @GetMapping
     public ApiResponse<List<FeatureToggleDTO>> getFeatures() {
         return ApiResponse.success(featureToggleService.getFeatures());
+    }
+
+    @GetMapping("/dependency-issues")
+    public ApiResponse<List<FeatureDependencyIssueDTO>> getDependencyIssues() {
+        return ApiResponse.success(featureToggleService.getDependencyIssues());
     }
 }
