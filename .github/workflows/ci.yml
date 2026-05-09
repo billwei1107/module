@@ -89,6 +89,24 @@ jobs:
           grep -q "module/backend/module-leave" /tmp/module-export-plan.txt
           grep -q "classpath:db/migration/payroll" /tmp/module-export-plan.txt
 
+      - name: Validate JSON manifest output
+        run: |
+          scripts/module-export.sh --modules payroll --format json > /tmp/module-export.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path("/tmp/module-export.json").read_text())
+          assert manifest["schemaVersion"] == "1.0"
+          assert manifest["requestedModules"] == ["payroll"]
+          assert manifest["requiredModules"] == ["auth", "organization", "attendance", "workflow", "leave", "finance", "payroll"]
+          assert "module/backend/module-payroll" in manifest["backendModules"]
+          assert "module/frontend-web/src/features/payroll" in manifest["frontendFeatures"]
+          assert "classpath:db/migration/payroll" in manifest["flywayLocations"]
+          assert "module/backend/module-common" in manifest["copyPaths"]
+          assert any(module["module"] == "payroll" for module in manifest["modules"])
+          PY
+
       - name: Validate rsync command output
         run: |
           scripts/module-export.sh --modules CRM,unknown-module --format rsync --target /tmp/module-target > /tmp/module-export-rsync.txt

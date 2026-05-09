@@ -19,11 +19,13 @@ REQUESTED_MODULES=()
 REQUIRED_MODULES=()
 UNKNOWN_MODULES=()
 RESOLVING_MODULES=()
+ADDITIONAL_MODULES=()
 BACKEND_MODULES=()
 FRONTEND_FEATURES=()
 FLYWAY_LOCATIONS=()
 DEFAULT_PATHS=()
 SUPPORT_PATHS=()
+COPY_PATHS=()
 
 usage() {
   cat <<'USAGE'
@@ -31,6 +33,7 @@ usage() {
 
 Usage:
   scripts/module-export.sh --modules payroll,leave
+  scripts/module-export.sh --modules payroll --format json
   scripts/module-export.sh --modules payroll --format rsync --target /path/to/project
   scripts/module-export.sh --modules payroll --target /path/to/project --execute
   scripts/module-export.sh --all
@@ -40,7 +43,7 @@ Options:
   --modules <list>   Comma or space separated module keys.
   --all              Select all reusable modules.
   --target <path>    Target project root for rsync commands or execution.
-  --format <format>  plan or rsync. Default: plan.
+  --format <format>  plan, json, or rsync. Default: plan.
   --execute          Execute rsync copy. Requires --target.
   --list             Print known module keys.
   -h, --help         Show this help.
@@ -263,6 +266,9 @@ build_plan() {
   append_unique SUPPORT_PATHS "module/env/local/.env.example"
 
   for module in "${REQUIRED_MODULES[@]}"; do
+    if ! array_contains "$module" "${REQUESTED_MODULES[@]}"; then
+      append_unique ADDITIONAL_MODULES "$module"
+    fi
     append_unique BACKEND_MODULES "module/backend/module-$module"
     append_unique FRONTEND_FEATURES "module/frontend-web/src/features/$module"
     append_unique FLYWAY_LOCATIONS "$(flyway_location_for "$module")"
@@ -270,6 +276,11 @@ build_plan() {
     if [[ -n "$default_path" ]]; then
       append_unique DEFAULT_PATHS "$default_path"
     fi
+  done
+
+  local path
+  for path in "${SUPPORT_PATHS[@]}" "${BACKEND_MODULES[@]}" "${FRONTEND_FEATURES[@]}"; do
+    append_unique COPY_PATHS "$path"
   done
 }
 
@@ -313,13 +324,44 @@ shell_quote() {
   printf "'%s'" "$value"
 }
 
+json_quote() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//$'\n'/\\n}"
+  printf '"%s"' "$value"
+}
+
+print_json_array_values() {
+  local first="true"
+  local value
+
+  printf '['
+  for value in "$@"; do
+    if [[ "$first" == "false" ]]; then
+      printf ', '
+    fi
+    json_quote "$value"
+    first="false"
+  done
+  printf ']'
+}
+
+print_json_array_field() {
+  local field="$1"
+  shift
+  printf '  "%s": ' "$field"
+  print_json_array_values "$@"
+  printf ',\n'
+}
+
 print_plan() {
   echo "Module export plan"
   echo "Repository: $REPO_ROOT"
   echo
   print_array "Requested modules:" "${REQUESTED_MODULES[@]}"
   print_array "Required modules:" "${REQUIRED_MODULES[@]}"
-  print_array "Additional required modules:" $(additional_modules)
+  print_array "Additional required modules:" "${ADDITIONAL_MODULES[@]}"
   print_array "Unknown modules:" "${UNKNOWN_MODULES[@]}"
   echo
   print_module_details
@@ -343,10 +385,67 @@ additional_modules() {
   done
 }
 
+print_json_modules() {
+  local module
+  local first_module="true"
+  local dependencies
+
+  printf '  "modules": [\n'
+  for module in "${REQUIRED_MODULES[@]}"; do
+    if [[ "$first_module" == "false" ]]; then
+      printf ',\n'
+    fi
+    dependencies="$(dependencies_for "$module")"
+    printf '    {\n'
+    printf '      "module": '
+    json_quote "$module"
+    printf ',\n'
+    printf '      "displayName": '
+    json_quote "$(display_name_for "$module")"
+    printf ',\n'
+    printf '      "dependencies": '
+    print_json_array_values $dependencies
+    printf ',\n'
+    printf '      "backendModule": '
+    json_quote "module/backend/module-$module"
+    printf ',\n'
+    printf '      "frontendFeature": '
+    json_quote "module/frontend-web/src/features/$module"
+    printf ',\n'
+    printf '      "flywayLocation": '
+    json_quote "$(flyway_location_for "$module")"
+    printf ',\n'
+    printf '      "defaultPath": '
+    json_quote "$(default_path_for "$module")"
+    printf '\n'
+    printf '    }'
+    first_module="false"
+  done
+  printf '\n  ]\n'
+}
+
+print_json_manifest() {
+  printf '{\n'
+  printf '  "schemaVersion": "1.0",\n'
+  printf '  "repository": '
+  json_quote "$REPO_ROOT"
+  printf ',\n'
+  print_json_array_field "requestedModules" "${REQUESTED_MODULES[@]}"
+  print_json_array_field "requiredModules" "${REQUIRED_MODULES[@]}"
+  print_json_array_field "additionalModules" "${ADDITIONAL_MODULES[@]}"
+  print_json_array_field "unknownModules" "${UNKNOWN_MODULES[@]}"
+  print_json_array_field "backendModules" "${BACKEND_MODULES[@]}"
+  print_json_array_field "frontendFeatures" "${FRONTEND_FEATURES[@]}"
+  print_json_array_field "flywayLocations" "${FLYWAY_LOCATIONS[@]}"
+  print_json_array_field "defaultPaths" "${DEFAULT_PATHS[@]}"
+  print_json_array_field "supportPaths" "${SUPPORT_PATHS[@]}"
+  print_json_array_field "copyPaths" "${COPY_PATHS[@]}"
+  print_json_modules
+  printf '}\n'
+}
+
 copy_paths() {
-  printf '%s\n' "${SUPPORT_PATHS[@]}"
-  printf '%s\n' "${BACKEND_MODULES[@]}"
-  printf '%s\n' "${FRONTEND_FEATURES[@]}"
+  printf '%s\n' "${COPY_PATHS[@]}"
 }
 
 ensure_path_exists() {
@@ -452,7 +551,7 @@ if [[ "${#REQUESTED_MODULES[@]}" -eq 0 ]]; then
 fi
 
 case "$FORMAT" in
-  plan|rsync)
+  plan|json|rsync)
     ;;
   *)
     echo "Unsupported format: $FORMAT" >&2
@@ -467,6 +566,8 @@ if [[ "$EXECUTE" == "true" ]]; then
   echo "Copied ${#REQUIRED_MODULES[@]} module(s) and support paths to $TARGET_ROOT"
 elif [[ "$FORMAT" == "rsync" ]]; then
   print_rsync_commands
+elif [[ "$FORMAT" == "json" ]]; then
+  print_json_manifest
 else
   print_plan
 fi
