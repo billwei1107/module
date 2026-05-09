@@ -1,27 +1,31 @@
-version: '3.8'
+name: ${COMPOSE_PROJECT_NAME:-module}
 
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: ${COMPOSE_PROJECT_NAME}-postgres
+    container_name: ${COMPOSE_PROJECT_NAME:-module}-postgres
     env_file:
-      - ../../env/local/.env
+      - path: ../../env/local/.env
+        required: false
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-enterprise_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT:-15432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
   redis:
     image: redis:7-alpine
-    container_name: ${COMPOSE_PROJECT_NAME}-redis
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    container_name: ${COMPOSE_PROJECT_NAME:-module}-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_password}
+    env_file:
+      - path: ../../env/local/.env
+        required: false
     ports:
-      - "${REDIS_PORT}:6379"
+      - "${REDIS_PORT:-16379}:6379"
     volumes:
       - redis_data:/data
     restart: always
@@ -30,16 +34,23 @@ services:
     build:
       context: ../../
       dockerfile: docker/local/Dockerfile.backend
-    container_name: ${COMPOSE_PROJECT_NAME}-backend
+    container_name: ${COMPOSE_PROJECT_NAME:-module}-backend
     env_file:
-      - ../../env/local/.env
+      - path: ../../env/local/.env
+        required: false
     environment:
       - DB_HOST=postgres
+      - DB_NAME=${DB_NAME:-enterprise_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - REDIS_HOST=redis
       - POSTGRES_PORT=5432
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
+      - JWT_SECRET=${JWT_SECRET:-local-dev-jwt-secret-change-me}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-900000}
     ports:
-      - "38080:8080"
+      - "${BACKEND_PORT:-38080}:8080"
     depends_on:
       - postgres
       - redis
@@ -49,11 +60,12 @@ services:
     build:
       context: ../../
       dockerfile: docker/local/Dockerfile.frontend
-    container_name: ${COMPOSE_PROJECT_NAME}-frontend
+    container_name: ${COMPOSE_PROJECT_NAME:-module}-frontend
     env_file:
-      - ../../env/local/.env
+      - path: ../../env/local/.env
+        required: false
     ports:
-      - "38082:80"
+      - "${FRONTEND_PORT:-38082}:80"
     depends_on:
       - backend
     restart: always
