@@ -15,6 +15,7 @@ MODULES_INPUT=""
 TARGET_ROOT=""
 FORMAT="plan"
 EXECUTE="false"
+REQUIRE_CLEAN="false"
 
 REQUESTED_MODULES=()
 REQUIRED_MODULES=()
@@ -59,11 +60,18 @@ git_is_dirty() {
     echo "false"
     return
   fi
-  if git -C "$REPO_ROOT" diff --quiet --ignore-submodules -- \
-    && git -C "$REPO_ROOT" diff --cached --quiet --ignore-submodules --; then
+  if [[ -z "$(git -C "$REPO_ROOT" status --porcelain --untracked-files=all)" ]]; then
     echo "false"
   else
     echo "true"
+  fi
+}
+
+ensure_clean_source() {
+  if [[ "$(git_is_dirty)" == "true" ]]; then
+    echo "Refusing formal export because the source repository has uncommitted or untracked changes." >&2
+    echo "Commit, stash, or remove local changes before re-running with --require-clean." >&2
+    exit 1
   fi
 }
 
@@ -74,6 +82,7 @@ usage() {
 Usage:
   scripts/module-export.sh --modules payroll,leave
   scripts/module-export.sh --modules payroll --format json
+  scripts/module-export.sh --modules payroll --format json --require-clean
   scripts/module-export.sh --modules payroll --format config
   scripts/module-export.sh --all --format markdown
   scripts/module-export.sh --modules payroll --format rsync --target /path/to/project
@@ -87,6 +96,7 @@ Options:
   --target <path>    Target project root for rsync commands or execution.
   --format <format>  plan, json, config, markdown, or rsync. Default: plan.
   --execute          Execute rsync copy. Requires --target.
+  --require-clean    Refuse export if the source repository has local changes.
   --list             Print known module keys.
   -h, --help         Show this help.
 
@@ -270,6 +280,7 @@ build_plan() {
   append_unique SUPPORT_PATHS "module/frontend-web/tsconfig.node.json"
   append_unique SUPPORT_PATHS "module/env/.env.example"
   append_unique SUPPORT_PATHS "module/env/local/.env.example"
+  append_unique SUPPORT_PATHS "module/docker/local"
 
   for module in "${REQUIRED_MODULES[@]}"; do
     if ! array_contains "$module" "${REQUESTED_MODULES[@]}"; then
@@ -504,7 +515,7 @@ print_bundle_readme() {
   echo
   echo "\`\`\`bash"
   echo "mvn -f module/backend/pom.xml test"
-  echo "cd module/frontend-web && npm ci && npm run build"
+  echo "cd module/frontend-web && npm ci && npm audit --audit-level=high && npm run build"
   echo "docker compose -f module/docker/local/docker-compose.yml config"
   echo "\`\`\`"
   echo
@@ -1160,6 +1171,10 @@ while [[ "$#" -gt 0 ]]; do
       EXECUTE="true"
       shift
       ;;
+    --require-clean)
+      REQUIRE_CLEAN="true"
+      shift
+      ;;
     --list)
       ensure_catalog_file
       print_list
@@ -1204,6 +1219,10 @@ case "$FORMAT" in
 esac
 
 build_plan
+
+if [[ "$REQUIRE_CLEAN" == "true" ]]; then
+  ensure_clean_source
+fi
 
 if [[ "$EXECUTE" == "true" ]]; then
   execute_copy

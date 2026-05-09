@@ -33,6 +33,7 @@ scripts/module-export.sh --modules payroll
 
 ```bash
 scripts/module-export.sh --modules payroll --format json > /tmp/module-export.json
+scripts/module-export.sh --modules payroll --format json --require-clean > /tmp/module-export-clean.json
 ```
 
 JSON manifest 可給其他工具或 CI 讀取，主要欄位：
@@ -58,6 +59,8 @@ JSON manifest 可給其他工具或 CI 讀取，主要欄位：
 - `modules`
 
 `source.*` 欄位用於追溯匯出的母體版本。若 `source.dirty` 為 `true`，代表匯出時母體工作樹含尚未提交的變更，不建議直接作為正式導入基準。
+
+正式導入建議加上 `--require-clean`，若母體存在未提交或未追蹤檔案，工具會拒絕匯出，避免 manifest 指向不可重現的狀態。
 
 ## 4. 產生 Markdown 清冊
 
@@ -109,6 +112,7 @@ scripts/module-export.sh --modules payroll --target /path/to/target-project --ex
 - 前端共用支援檔：`module/frontend-web/src/shared`
 - 前端入口與建置設定
 - 環境變數範本
+- 本地 Docker Compose 與 Dockerfile 設定
 
 執行後工具會自動重寫目標端的 portable 整合檔：
 
@@ -127,8 +131,14 @@ scripts/module-export.sh --modules payroll --target /path/to/target-project --ex
 
 ```bash
 mvn -f module/backend/pom.xml test
-cd module/frontend-web && npm ci && npm run build
+cd module/frontend-web && npm ci && npm audit --audit-level=high && npm run build
 docker compose -f module/docker/local/docker-compose.yml config
+```
+
+若仍可從母體倉庫執行工具，也可以使用導入驗收腳本：
+
+```bash
+scripts/module-verify-import.sh --target /path/to/target-project
 ```
 
 若目標專案沒有相同 frontend/backend 目錄結構，先使用 `--format json` 或 `--format rsync` 審核，再手動調整搬移路徑。

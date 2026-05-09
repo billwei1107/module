@@ -158,3 +158,11 @@
 **原因分析**: `package-lock.json` 鎖定 `axios 1.14.0`、`follow-redirects 1.15.11`、`postcss 8.5.8`，落在 npm audit 公告的受影響版本範圍內。雖然前端 build 可通過，但正式導入其他專案時會留下安全掃描風險。
 **Solution**: 在 `module/frontend-web` 執行 `npm audit fix` 更新 lockfile，實際升級至 `axios 1.16.0`、`follow-redirects 1.16.0`、`postcss 8.5.14`。新增 CI `npm audit --audit-level=high` gate，並重跑 `npm ci`, `npm audit --audit-level=high`, `npm run lint -- --max-warnings=0`, `npm run build` 與 portable payroll 匯入 build，結果皆通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-frontend-npm-audit-vulnerabilities.md`
+
+## 2026-05-09 - portable bundle 正式匯出缺少乾淨來源防呆
+
+### 問題: manifest 可能無法完整反映未追蹤檔案與正式驗收步驟
+**Issue**: portable bundle manifest 已記錄 `source.dirty`，但原本 dirty 判斷只檢查 tracked diff 與 staged diff，未納入 untracked files；正式導入流程也缺少單一驗收腳本，且匯出的 support paths 沒有包含 `module/docker/local`，目標專案無法直接跑 Compose config 驗證。
+**原因分析**: `git diff` 與 `git diff --cached` 不會偵測未追蹤檔案；正式交付時若有未追蹤但實際被手動參考的檔案，manifest 仍可能標成乾淨。匯出清單早期聚焦 backend/frontend build，漏掉 Docker local 設定與一鍵驗收入口。
+**Solution**: 將 dirty 判斷改為 `git status --porcelain --untracked-files=all`，新增 `scripts/module-export.sh --require-clean` 讓正式匯出遇到未提交或未追蹤變更時直接失敗。新增 `scripts/module-verify-import.sh`，驗證 manifest、`source.dirty`、後端 Maven、前端 `npm audit --audit-level=high`/build，以及 Docker Compose config。`--execute` support paths 補入 `module/docker/local`。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-portable-bundle-clean-export-guard.md`

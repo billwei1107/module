@@ -9,7 +9,7 @@
 ```bash
 git status --short --branch
 mvn -f module/backend/pom.xml test
-cd module/frontend-web && npm ci && npm run lint -- --max-warnings=0 && npm run build
+cd module/frontend-web && npm ci && npm audit --audit-level=high && npm run lint -- --max-warnings=0 && npm run build
 docker compose -f module/docker/local/docker-compose.yml config
 ```
 
@@ -25,7 +25,7 @@ git push origin module-vYYYY.MM.DD.N
 ## 2. 匯出 Bundle
 
 ```bash
-scripts/module-export.sh --modules payroll --target /path/to/target-project --execute
+scripts/module-export.sh --modules payroll --target /path/to/target-project --execute --require-clean
 ```
 
 匯出後目標專案會取得：
@@ -35,6 +35,7 @@ scripts/module-export.sh --modules payroll --target /path/to/target-project --ex
 - `module/backend/*`：已裁切的 Maven portable backend bundle
 - `module/frontend-web/*`：已裁切的 frontend feature 契約與入口
 - `module/env/*`：導入後需要調整的環境變數範本
+- `module/docker/local/*`：本地 Docker Compose、Dockerfile 與 Nginx 設定
 
 正式導入前，請確認：
 
@@ -50,8 +51,14 @@ grep '"dirty": false' module/module-bundle-manifest.json
 在目標專案中提交前至少執行：
 
 ```bash
+scripts/module-verify-import.sh --target /path/to/target-project
+```
+
+若目標專案不方便直接使用母體腳本，則手動執行等價命令：
+
+```bash
 mvn -f module/backend/pom.xml test
-cd module/frontend-web && npm ci && npm run build
+cd module/frontend-web && npm ci && npm audit --audit-level=high && npm run build
 docker compose -f module/docker/local/docker-compose.yml config
 ```
 
@@ -74,7 +81,7 @@ cp module/module-bundle-manifest.json /tmp/module-bundle-manifest.before.json
 再從新母體基線匯出到暫存目錄並比對：
 
 ```bash
-scripts/module-export.sh --modules payroll --target /tmp/module-upgrade-check --execute
+scripts/module-export.sh --modules payroll --target /tmp/module-upgrade-check --execute --require-clean
 diff -u /tmp/module-bundle-manifest.before.json /tmp/module-upgrade-check/module/module-bundle-manifest.json
 ```
 

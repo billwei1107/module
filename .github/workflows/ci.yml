@@ -97,7 +97,9 @@ jobs:
           cache-dependency-path: module/frontend-web/package-lock.json
 
       - name: Validate script syntax
-        run: bash -n scripts/module-export.sh
+        run: |
+          bash -n scripts/module-export.sh
+          bash -n scripts/module-verify-import.sh
 
       - name: Validate module catalog resource
         run: |
@@ -145,6 +147,17 @@ jobs:
           assert any(module["module"] == "payroll" for module in manifest["modules"])
           PY
 
+      - name: Validate clean export guard
+        run: |
+          scripts/module-export.sh --modules crm --format json --require-clean > /tmp/module-export-clean.json
+          touch .module-export-dirty-smoke
+          if scripts/module-export.sh --modules crm --format json --require-clean >/tmp/module-export-dirty.json 2>/tmp/module-export-dirty.err; then
+            echo "--require-clean should fail when the repository has untracked files" >&2
+            exit 1
+          fi
+          grep -q "Refusing formal export" /tmp/module-export-dirty.err
+          rm -f .module-export-dirty-smoke
+
       - name: Validate Markdown catalog output
         run: |
           scripts/module-export.sh --all --format markdown > /tmp/module-catalog.md
@@ -171,6 +184,7 @@ jobs:
           test -d /tmp/module-export-copy/module/backend/module-crm
           test -d /tmp/module-export-copy/module/backend/module-auth
           test -d /tmp/module-export-copy/module/frontend-web/src/features/crm
+          test -f /tmp/module-export-copy/module/docker/local/docker-compose.yml
           test -f /tmp/module-export-copy/module/module-bundle-manifest.json
           test -f /tmp/module-export-copy/module/MODULE_BUNDLE.md
           python3 - <<'PY'
@@ -193,11 +207,7 @@ jobs:
             scripts/module-export.sh --modules "$module" --target "$target" --execute
             test ! -d "$target/module/backend/app/target"
             grep -q "<module>module-${module}</module>" "$target/module/backend/pom.xml"
-            mvn -f "$target/module/backend/pom.xml" test
-            cd "$target/module/frontend-web"
-            npm ci
-            npm run build
-            cd "$GITHUB_WORKSPACE"
+            scripts/module-verify-import.sh --target "$target"
           done
 
   docs:
@@ -216,10 +226,12 @@ jobs:
           grep -q "scripts/module-export.sh --modules payroll --format json" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --all --format markdown" docs/module-portability-guide.md
           grep -q "module/module-bundle-manifest.json" docs/module-portability-guide.md
+          grep -q "scripts/module-verify-import.sh --target" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --format config" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --target /path/to/target-project --execute" docs/module-portability-guide.md
           grep -q "mvn -f module/backend/pom.xml test" docs/module-portability-guide.md
-          grep -q "npm ci && npm run build" docs/module-portability-guide.md
+          grep -q "npm audit --audit-level=high" docs/module-portability-guide.md
+          grep -q "module-verify-import.sh" docs/module-release-guide.md
           grep -q "module-vYYYY.MM.DD.N" docs/module-release-guide.md
           grep -q "source.shortCommit" docs/module-release-guide.md
           grep -q "module-bundle-manifest.json" CHANGELOG.md
