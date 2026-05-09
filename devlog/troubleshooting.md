@@ -143,3 +143,10 @@
 **原因分析**: macOS 預設 Bash 3.2 在 `set -u` / nounset 模式下，對尚無元素的陣列執行 `"${ARRAY[@]}"` 可能被視為未綁定變數。搬移腳本需要在多個空陣列上累加模組清單，因此 strict nounset 會讓首次 append 失敗。
 **Solution**: 將腳本開頭由 `set -euo pipefail` 調整為 `set -eo pipefail`，保留錯誤中止與 pipefail，但避免 Bash 3.2 空陣列 nounset 問題。修正後 `bash -n scripts/module-export.sh`、`--modules payroll`、`--format rsync` 與 `--execute` 複製 smoke test 均通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-bash-empty-array-nounset.md`
+
+## 2026-05-09 - 部分模組 portable 匯入後 build 失敗
+
+### 問題: `crm` 匯入乾淨目標後 Maven 與 Vite 依序失敗
+**Issue**: 執行 `scripts/module-export.sh --modules crm --target /tmp/module-import-crm-smoke --execute` 後，`mvn -f /tmp/module-import-crm-smoke/module/backend/pom.xml test` 起初失敗，錯誤包含 `Child module ... module-workflow ... does not exist`；修正父 POM 後又因 app 舊 `target/test-classes` 引用未匯出的模組而出現 `NoClassDefFoundError: com/enterprise/workflow/...`；前端 `npm run build` 起初也因缺少 `index.html` 顯示 `Cannot resolve entry module index.html`。
+**原因分析**: 匯出工具早期只複製母體整合檔，父 POM、app POM、`Application.java`、`application.yml`、前端 `App.tsx` 仍以全模組母體為假設，不適合只匯出部分模組。`rsync -a` 也會把母體既有 `target/`, `node_modules/`, `dist/` 等 build 產物一起帶到目標端，造成 Maven 使用過期 test-classes。前端支援檔清單漏列 Vite 根入口 `frontend-web/index.html` 與 public assets。
+**Solution**: `--execute` 改為輸出 portable bundle：排除 `target`, `node_modules`, `dist`，並重寫目標端 `module/backend/pom.xml`、`app/pom.xml`、`Application.java`、`application.yml`、`frontend-web/src/App.tsx`、`moduleNavigation.ts`，只保留 required modules。補入 `frontend-web/index.html` 與 `public/`。新增 CI `Validate portable CRM import build`，在 `/tmp` 實際匯出 `crm` 並執行 `mvn test`, `npm ci`, `npm run build`。

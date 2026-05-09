@@ -83,7 +83,7 @@ scripts/module-export.sh --modules payroll --format rsync --target /path/to/targ
 scripts/module-export.sh --modules payroll --target /path/to/target-project --execute
 ```
 
-`--execute` 會使用 `rsync -a` 複製：
+`--execute` 會使用 `rsync -a --exclude target --exclude node_modules --exclude dist` 複製：
 
 - 後端模組：`module/backend/module-*`
 - 前端 feature：`module/frontend-web/src/features/*`
@@ -93,14 +93,22 @@ scripts/module-export.sh --modules payroll --target /path/to/target-project --ex
 - 前端入口與建置設定
 - 環境變數範本
 
+執行後工具會自動重寫目標端的 portable 整合檔：
+
+- `module/backend/pom.xml`：只保留 `module-common`、所選模組的遞迴依賴，以及 `app`
+- `module/backend/app/pom.xml`：只依賴已匯出的後端模組
+- `module/backend/app/src/main/java/com/enterprise/Application.java`：只掃描已匯出模組的 `config` package
+- `module/backend/app/src/main/resources/application.yml`：只啟用已匯出模組與對應 Flyway locations
+- `module/frontend-web/src/App.tsx`：只匯入已匯出 feature 的頁面
+- `module/frontend-web/src/shared/navigation/moduleNavigation.ts`：只保留已匯出模組的導覽資料
+
 ## 7. 導入後檢查
 
 在目標專案中至少執行：
 
 ```bash
-mvn test
-npm run lint -- --max-warnings=0
-npm run build
+mvn -f module/backend/pom.xml test
+cd module/frontend-web && npm ci && npm run build
 docker compose -f module/docker/local/docker-compose.yml config
 ```
 

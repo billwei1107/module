@@ -79,6 +79,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: module/frontend-web/package-lock.json
+
       - name: Validate script syntax
         run: bash -n scripts/module-export.sh
 
@@ -137,6 +151,7 @@ jobs:
           scripts/module-export.sh --modules CRM,unknown-module --format rsync --target /tmp/module-target > /tmp/module-export-rsync.txt
           grep -q "Unknown modules were ignored: unknown-module" /tmp/module-export-rsync.txt
           grep -q "module/frontend-web/src/features/crm" /tmp/module-export-rsync.txt
+          grep -q -- "--exclude target --exclude node_modules --exclude dist" /tmp/module-export-rsync.txt
 
       - name: Validate execute copy smoke
         run: |
@@ -144,6 +159,18 @@ jobs:
           test -d /tmp/module-export-copy/module/backend/module-crm
           test -d /tmp/module-export-copy/module/backend/module-auth
           test -d /tmp/module-export-copy/module/frontend-web/src/features/crm
+
+      - name: Validate portable CRM import build
+        run: |
+          rm -rf /tmp/module-import-crm-smoke
+          scripts/module-export.sh --modules crm --target /tmp/module-import-crm-smoke --execute
+          test ! -d /tmp/module-import-crm-smoke/module/backend/app/target
+          grep -q "<module>module-crm</module>" /tmp/module-import-crm-smoke/module/backend/pom.xml
+          ! grep -q "<module>module-payroll</module>" /tmp/module-import-crm-smoke/module/backend/pom.xml
+          mvn -f /tmp/module-import-crm-smoke/module/backend/pom.xml test
+          cd /tmp/module-import-crm-smoke/module/frontend-web
+          npm ci
+          npm run build
 
   docs:
     name: Documentation Checks
@@ -158,7 +185,8 @@ jobs:
           grep -q "scripts/module-export.sh --modules payroll --format json" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --format config" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --target /path/to/target-project --execute" docs/module-portability-guide.md
-          grep -q "mvn test" docs/module-portability-guide.md
+          grep -q "mvn -f module/backend/pom.xml test" docs/module-portability-guide.md
+          grep -q "npm ci && npm run build" docs/module-portability-guide.md
 
   docker-build:
     name: Docker Build
