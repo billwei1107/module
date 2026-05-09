@@ -65,3 +65,11 @@
 **原因分析**: Playwright role locator 的 `name` 預設允許部分匹配，兩個按鈕文字有共同片段。
 **Solution**: 將定位改為 `getByRole('button', { name: '建立會議', exact: true })`。修正後 meeting smoke test 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-playwright-button-name-partial-match.md`
+
+## 2026-05-09 - Announcement 單測 Mock 回傳序列與 Maven lifecycle 名稱
+
+### 問題: `confirm()` 測試未觸發 confirmation save，且 Maven phase 誤寫為 `testCompile`
+**Issue**: `module-announcement` 單測初跑時，`confirmShouldMarkReadAndConfirmedForImportantAnnouncement` 驗證 `AnnouncementConfirmationRepository.save()` 未被呼叫；另一次查 warning 時使用 `mvn ... testCompile`，Maven 回報 `Unknown lifecycle phase "testCompile"`。
+**原因分析**: `confirm()` 會先呼叫 `markRead()`，而 `markRead()` 回傳 DTO 時會先查詢一次 confirmation 狀態，導致 Mockito 連續回傳序列被提前消耗；Maven 標準 lifecycle phase 使用 kebab-case，正確名稱為 `test-compile`。
+**Solution**: 將 confirmation repository mock 回傳序列調整為 `Optional.empty(), Optional.empty(), Optional.of(...)`，並改用 `mvn ... test-compile` 查編譯。修正後 `mvn clean test -pl module-announcement -am` 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-announcement-test-mock-sequence.md`
