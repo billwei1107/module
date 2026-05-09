@@ -251,6 +251,12 @@ jobs:
           test -f docs/module-catalog.md
           test -f docs/module-release-guide.md
           test -f CHANGELOG.md
+          test -f ai-module-planning.md
+          test -f ai-module-change-protocol.md
+          grep -q "module-v2026.05.09.1" ai-module-planning.md
+          grep -q "scripts/module-export.sh" ai-module-planning.md
+          grep -q "scripts/module-manifest-diff.sh" ai-module-change-protocol.md
+          grep -q "scripts/module-release-check.sh" ai-module-change-protocol.md
           grep -q "scripts/module-export.sh --modules payroll --format json" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --all --format markdown" docs/module-portability-guide.md
           grep -q "module/module-bundle-manifest.json" docs/module-portability-guide.md
@@ -264,6 +270,8 @@ jobs:
           grep -q "module-verify-import.sh" docs/module-release-guide.md
           grep -q "module-manifest-diff.sh" docs/module-release-guide.md
           grep -q "module-release-check.sh" docs/module-release-guide.md
+          grep -q "ai-module-planning.md" docs/module-release-guide.md
+          grep -q "ai-module-change-protocol.md" docs/module-portability-guide.md
           grep -q "module-vYYYY.MM.DD.N" docs/module-release-guide.md
           grep -q "source.shortCommit" docs/module-release-guide.md
           grep -q "module-bundle-manifest.json" CHANGELOG.md

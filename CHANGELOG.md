@@ -5,6 +5,8 @@ All notable changes to the enterprise modular component repository are recorded 
 ## Unreleased
 
 ### Added
+- Added `ai-module-planning.md` as the AI-first planning entry for selecting reusable modules in new projects.
+- Added `ai-module-change-protocol.md` to define how target-project fixes, reusable changes, and new modules are written back to the module source repository.
 - Added portable module bundle generation for selected modules and recursive dependencies.
 - Added generated `module/module-bundle-manifest.json` with export time, source branch, commit, tag, dirty state, selected modules, dependency-expanded modules, copy paths, Flyway locations, and frontend/backend paths.
 - Added generated `module/MODULE_BUNDLE.md` with human-readable source metadata, included modules, and required verification commands.

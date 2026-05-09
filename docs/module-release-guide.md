@@ -2,6 +2,8 @@
 
 本文件定義母體倉庫發布可導入基線，以及其他專案導入或升級模組時必須保留的版本追蹤資訊。
 
+新專案規劃時先讀根目錄 `ai-module-planning.md`；既有專案追加模組、修正通用 bug 或新增可重用模組時先讀 `ai-module-change-protocol.md`。
+
 ## 1. 發布基線
 
 正式導入其他專案前，母體倉庫必須位於乾淨的開發分支或已審核的 release commit：
@@ -97,3 +99,5 @@ scripts/module-manifest-diff.sh \
 ## 5. 回寫母體
 
 若目標專案修復的是通用 bug 或可複用能力，必須回寫母體倉庫並重新發布基線。專案專屬 UI 可留在目標專案，但 API contract、DTO、模組 key、Flyway schema 與 feature toggle 行為若具通用性，應優先回寫母體。
+
+詳細判斷與操作流程請參考根目錄 `ai-module-change-protocol.md`。

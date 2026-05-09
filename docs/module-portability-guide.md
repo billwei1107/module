@@ -2,6 +2,8 @@
 
 本文件說明如何從母體倉庫匯出可重用模組，並導入到另一個專案。前端畫面在目標專案通常會被重做；這裡重點是搬移後端業務模組、前端 feature 契約、共用支援檔、Flyway migration 與 Feature Toggle 設定。
 
+若新專案尚未決定要導入哪些模組，請先閱讀根目錄 `ai-module-planning.md`。若是在既有專案追加模組、修正通用 bug 或新增可重用模組，請先閱讀 `ai-module-change-protocol.md`。
+
 ## 1. 確認模組 key
 
 ```bash
@@ -170,4 +172,5 @@ scripts/module-manifest-diff.sh \
 - 搬移後若修改目標專案 UI，仍應保留 API contract、型別與模組 key 的相容性。
 - 正式交付或跨專案導入前，請確認 `module/module-bundle-manifest.json` 的 `source.dirty` 為 `false`，並在目標專案提交訊息或 devlog 中記錄 `source.shortCommit`。
 - 從母體發布可導入基線前，先執行 `scripts/module-release-check.sh --modules <module-list>`。
+- 新專案規劃與母體回寫規範請參考根目錄 `ai-module-planning.md` 與 `ai-module-change-protocol.md`。
 - 發布 tag、正式導入與升級流程請參考 `docs/module-release-guide.md`。
