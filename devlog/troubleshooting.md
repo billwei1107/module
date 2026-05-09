@@ -41,3 +41,11 @@
 **Solution**: 在 `module/frontend-web/vite.config.ts` 加入 `define: { global: 'globalThis' }`。修復後 `npx tsc -b`、`npm run build` 與 Playwright 互動測試皆通過。此問題已同步寫入 Obsidian raw 與 ai-kb：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-vite-global-is-not-defined.md`
 - `~/ai-kb/kb/60-errors/frontend/2026-05-09-vite-global-is-not-defined.md`
+
+## 2026-05-09 - Playwright 文字定位過寬造成 strict mode violation
+
+### 問題: `getByText('policy')` 同時匹配標籤與檔名
+**Issue**: `module-document` 前端 smoke test 驗證標籤時，`getByText('policy')` 同時匹配到 `leave-policy.pdf`、`store-policy.pdf` 與標籤 `policy`，Playwright 回報 strict mode violation。
+**原因分析**: 臨時測試使用部分文字匹配，文件名稱也包含相同片段，導致 locator 不唯一。
+**Solution**: 改為 `getByText('policy', { exact: true })` 精確匹配標籤文字。修正後 `npx playwright test tmp-document-browser.spec.ts --reporter=line` 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-playwright-text-locator-strict-mode.md`
