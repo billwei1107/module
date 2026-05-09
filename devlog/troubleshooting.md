@@ -120,3 +120,10 @@
 **原因分析**: 既有前端部分 API 與 hook 使用 `any` 迴避 Axios interceptor 型別；資料載入函式未以 `useCallback` 穩定依賴；React Hooks 外掛新版規則包含 React Compiler 導向檢查，會將此專案現有頁面常見的資料載入 effect 判定為錯誤，造成 CI 基線無法落地。
 **Solution**: 將 auth API、角色/使用者清單、登入 hook、WebSocket hook 與共用 `ApiResponse` 改為明確型別或 `unknown`；以 `useCallback` 清理 hook dependency warning；在 ESLint config 關閉不適合現有頁面模式的 `react-hooks/set-state-in-effect`、`react-hooks/refs`、`react-hooks/purity`，並保留 hooks 基礎規則。修正後 `npm run lint -- --max-warnings=0` 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-frontend-eslint-ci-baseline.md`
+
+## 2026-05-09 - GitHub Actions Node 20 runtime 淘汰註記
+
+### 問題: `actions/checkout@v4` 與 `actions/setup-node@v4` 使用 Node 20 runtime
+**Issue**: GitHub Actions 首次 CI run 顯示 annotation：`Node.js 20 actions are deprecated`，並提示 2026-06-02 後 runner 會預設切到 Node 24。
+**原因分析**: 初版 workflow 使用 `actions/checkout@v4`、`actions/setup-node@v4`、`actions/setup-java@v4`，這些版本仍可能執行在 Node 20 action runtime。雖然當下 job 可通過，但會留下短期升級風險。
+**Solution**: 透過遠端 tag 確認官方 actions 已提供新版後，升級為 `actions/checkout@v6`、`actions/setup-node@v6`、`actions/setup-java@v5`，重新推送觸發 CI。
