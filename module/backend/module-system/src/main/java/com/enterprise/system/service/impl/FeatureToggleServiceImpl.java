@@ -1,13 +1,18 @@
 package com.enterprise.system.service.impl;
 
 import com.enterprise.system.dto.FeatureDependencyIssueDTO;
+import com.enterprise.system.dto.FeatureInstallationPlanDTO;
 import com.enterprise.system.dto.FeatureToggleDTO;
 import com.enterprise.system.service.FeatureToggleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @file FeatureToggleServiceImpl.java
@@ -54,6 +59,8 @@ public class FeatureToggleServiceImpl implements FeatureToggleService {
             new ModuleDefinition("announcement", "公告系統", "Announcement", "ADVANCED", "P3",
                     "/announcements", List.of("auth", "organization", "notification"), "announcement", "classpath:db/migration/announcement")
     );
+    private static final Map<String, ModuleDefinition> MODULE_DEFINITION_MAP = MODULE_DEFINITIONS.stream()
+            .collect(LinkedHashMap::new, (map, definition) -> map.put(definition.module(), definition), LinkedHashMap::putAll);
 
     private final Environment environment;
 
@@ -71,6 +78,44 @@ public class FeatureToggleServiceImpl implements FeatureToggleService {
                 .map(this::toDependencyIssue)
                 .filter(issue -> !issue.getMissingDependencies().isEmpty())
                 .toList();
+    }
+
+    @Override
+    public FeatureInstallationPlanDTO createInstallationPlan(List<String> selectedModules) {
+        List<String> requestedModules = normalizeModules(selectedModules);
+        Set<String> requiredModules = new LinkedHashSet<>();
+        Set<String> unknownModules = new LinkedHashSet<>();
+
+        requestedModules.forEach(module -> collectDependencies(module, requiredModules, unknownModules));
+
+        List<String> additionalModules = requiredModules.stream()
+                .filter(module -> !requestedModules.contains(module))
+                .toList();
+        List<FeatureToggleDTO> modules = requiredModules.stream()
+                .map(MODULE_DEFINITION_MAP::get)
+                .map(this::toDto)
+                .toList();
+
+        return FeatureInstallationPlanDTO.builder()
+                .requestedModules(requestedModules)
+                .requiredModules(requiredModules.stream().toList())
+                .additionalModules(additionalModules)
+                .unknownModules(unknownModules.stream().toList())
+                .backendModules(modules.stream().map(FeatureToggleDTO::getBackendModule).toList())
+                .frontendFeatures(modules.stream().map(FeatureToggleDTO::getFrontendFeature).toList())
+                .flywayLocations(modules.stream().map(FeatureToggleDTO::getFlywayLocation).distinct().toList())
+                .defaultPaths(modules.stream().map(FeatureToggleDTO::getDefaultPath).filter(path -> path != null).toList())
+                .modules(modules)
+                .build();
+    }
+
+    @Override
+    public FeatureInstallationPlanDTO getCurrentInstallationPlan() {
+        List<String> enabledModules = MODULE_DEFINITIONS.stream()
+                .map(ModuleDefinition::module)
+                .filter(this::isEnabled)
+                .toList();
+        return createInstallationPlan(enabledModules);
     }
 
     // ========================================
@@ -109,6 +154,30 @@ public class FeatureToggleServiceImpl implements FeatureToggleService {
 
     private boolean isEnabled(String module) {
         return environment.getProperty("modules." + module, Boolean.class, false);
+    }
+
+    // ========================================
+    // 安裝計畫 / Installation Planning
+    // ========================================
+    private List<String> normalizeModules(List<String> modules) {
+        if (modules == null) {
+            return List.of();
+        }
+        return modules.stream()
+                .filter(module -> module != null && !module.isBlank())
+                .map(module -> module.trim().toLowerCase())
+                .distinct()
+                .toList();
+    }
+
+    private void collectDependencies(String module, Set<String> requiredModules, Set<String> unknownModules) {
+        ModuleDefinition definition = MODULE_DEFINITION_MAP.get(module);
+        if (definition == null) {
+            unknownModules.add(module);
+            return;
+        }
+        definition.dependencies().forEach(dependency -> collectDependencies(dependency, requiredModules, unknownModules));
+        requiredModules.add(module);
     }
 
     private String buildDependencyMessage(ModuleDefinition definition, List<String> missingDependencies) {

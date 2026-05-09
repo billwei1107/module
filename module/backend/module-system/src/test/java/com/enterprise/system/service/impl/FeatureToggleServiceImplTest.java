@@ -1,6 +1,7 @@
 package com.enterprise.system.service.impl;
 
 import com.enterprise.system.dto.FeatureDependencyIssueDTO;
+import com.enterprise.system.dto.FeatureInstallationPlanDTO;
 import com.enterprise.system.dto.FeatureToggleDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
@@ -111,5 +112,64 @@ class FeatureToggleServiceImplTest {
         FeatureToggleServiceImpl service = new FeatureToggleServiceImpl(environment);
 
         assertThat(service.getDependencyIssues()).isEmpty();
+    }
+
+    @Test
+    void createInstallationPlanShouldExpandTransitiveDependenciesInDependencyFirstOrder() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("modules.auth", "true")
+                .withProperty("modules.organization", "true")
+                .withProperty("modules.attendance", "true")
+                .withProperty("modules.leave", "true")
+                .withProperty("modules.finance", "false")
+                .withProperty("modules.payroll", "false");
+
+        FeatureToggleServiceImpl service = new FeatureToggleServiceImpl(environment);
+        FeatureInstallationPlanDTO plan = service.createInstallationPlan(List.of("payroll"));
+
+        assertThat(plan.getRequestedModules()).containsExactly("payroll");
+        assertThat(plan.getRequiredModules()).containsExactly(
+                "auth", "organization", "attendance", "workflow", "leave", "finance", "payroll"
+        );
+        assertThat(plan.getAdditionalModules()).containsExactly("auth", "organization", "attendance", "workflow", "leave", "finance");
+        assertThat(plan.getUnknownModules()).isEmpty();
+        assertThat(plan.getBackendModules()).contains(
+                "module/backend/module-payroll",
+                "module/backend/module-leave",
+                "module/backend/module-finance"
+        );
+        assertThat(plan.getFrontendFeatures()).contains("module/frontend-web/src/features/payroll");
+        assertThat(plan.getFlywayLocations()).contains("classpath:db/migration/payroll");
+        assertThat(plan.getDefaultPaths()).contains("/payroll", "/leave/requests", "/finance");
+        assertThat(plan.getModules()).anySatisfy(module -> {
+            assertThat(module.getModule()).isEqualTo("finance");
+            assertThat(module.getEnabled()).isFalse();
+        });
+    }
+
+    @Test
+    void createInstallationPlanShouldReportUnknownModulesAndDeduplicateRequest() {
+        FeatureToggleServiceImpl service = new FeatureToggleServiceImpl(new MockEnvironment());
+        FeatureInstallationPlanDTO plan = service.createInstallationPlan(List.of(" CRM ", "crm", "unknown-module"));
+
+        assertThat(plan.getRequestedModules()).containsExactly("crm", "unknown-module");
+        assertThat(plan.getRequiredModules()).containsExactly("auth", "organization", "crm");
+        assertThat(plan.getAdditionalModules()).containsExactly("auth", "organization");
+        assertThat(plan.getUnknownModules()).containsExactly("unknown-module");
+    }
+
+    @Test
+    void getCurrentInstallationPlanShouldUseEnabledModules() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("modules.auth", "true")
+                .withProperty("modules.organization", "true")
+                .withProperty("modules.inventory", "true");
+
+        FeatureToggleServiceImpl service = new FeatureToggleServiceImpl(environment);
+        FeatureInstallationPlanDTO plan = service.getCurrentInstallationPlan();
+
+        assertThat(plan.getRequestedModules()).containsExactly("auth", "organization", "inventory");
+        assertThat(plan.getRequiredModules()).containsExactly("auth", "organization", "inventory");
+        assertThat(plan.getAdditionalModules()).isEmpty();
     }
 }

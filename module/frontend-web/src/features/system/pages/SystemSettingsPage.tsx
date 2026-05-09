@@ -10,6 +10,7 @@ import {
     Box,
     Button,
     Chip,
+    Divider,
     Paper,
     Stack,
     Table,
@@ -22,33 +23,37 @@ import {
 } from '@mui/material';
 import {
     getDictionaries,
+    getCurrentFeatureInstallationPlan,
     getFeatureDependencyIssues,
     getFeatureToggles,
     getNextSequence,
     getSystemConfigs,
     upsertSystemConfig,
 } from '../api/systemApi';
-import type { Dictionary, FeatureDependencyIssue, FeatureToggle, SystemConfig } from '../types';
+import type { Dictionary, FeatureDependencyIssue, FeatureInstallationPlan, FeatureToggle, SystemConfig } from '../types';
 
 export const SystemSettingsPage = () => {
     const [configs, setConfigs] = useState<SystemConfig[]>([]);
     const [features, setFeatures] = useState<FeatureToggle[]>([]);
     const [dependencyIssues, setDependencyIssues] = useState<FeatureDependencyIssue[]>([]);
+    const [installationPlan, setInstallationPlan] = useState<FeatureInstallationPlan | null>(null);
     const [dictionaries, setDictionaries] = useState<Dictionary[]>([]);
     const [systemName, setSystemName] = useState('模塊化企業系統');
     const [sequence, setSequence] = useState('');
     const [message, setMessage] = useState('');
 
     const loadData = async () => {
-        const [configResult, featureResult, dependencyIssueResult, dictionaryResult] = await Promise.all([
+        const [configResult, featureResult, dependencyIssueResult, installationPlanResult, dictionaryResult] = await Promise.all([
             getSystemConfigs(),
             getFeatureToggles(),
             getFeatureDependencyIssues(),
+            getCurrentFeatureInstallationPlan(),
             getDictionaries(),
         ]);
         setConfigs(configResult);
         setFeatures(featureResult);
         setDependencyIssues(dependencyIssueResult);
+        setInstallationPlan(installationPlanResult);
         setDictionaries(dictionaryResult);
         const nameConfig = configResult.find((config) => config.key === 'system.name');
         if (nameConfig) {
@@ -143,6 +148,31 @@ export const SystemSettingsPage = () => {
                             </Typography>
                         ))}
                     </Alert>
+                )}
+                {installationPlan && (
+                    <>
+                        <Divider sx={{ my: 2 }} />
+                        <Stack spacing={1}>
+                            <Typography variant="subtitle1">目前啟用模組搬移清單</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                必備模組：{installationPlan.requiredModules.join(', ') || '無'}
+                            </Typography>
+                            {installationPlan.additionalModules.length > 0 && (
+                                <Alert severity="info">
+                                    需額外導入：{installationPlan.additionalModules.join(', ')}
+                                </Alert>
+                            )}
+                            <Typography variant="body2">
+                                後端：{installationPlan.backendModules.join('、') || '無'}
+                            </Typography>
+                            <Typography variant="body2">
+                                前端：{installationPlan.frontendFeatures.join('、') || '無'}
+                            </Typography>
+                            <Typography variant="body2">
+                                Flyway：{installationPlan.flywayLocations.join('、') || '無'}
+                            </Typography>
+                        </Stack>
+                    </>
                 )}
             </Paper>
 

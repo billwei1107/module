@@ -1,6 +1,7 @@
 package com.enterprise.system.service;
 
 import com.enterprise.system.dto.FeatureDependencyIssueDTO;
+import com.enterprise.system.dto.FeatureInstallationPlanDTO;
 import com.enterprise.system.dto.FeatureToggleDTO;
 
 import java.util.List;
@@ -13,4 +14,8 @@ public interface FeatureToggleService {
     List<FeatureToggleDTO> getFeatures();
 
     List<FeatureDependencyIssueDTO> getDependencyIssues();
+
+    FeatureInstallationPlanDTO createInstallationPlan(List<String> selectedModules);
+
+    FeatureInstallationPlanDTO getCurrentInstallationPlan();
 }

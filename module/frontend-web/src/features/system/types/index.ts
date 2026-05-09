@@ -33,6 +33,22 @@ export interface FeatureDependencyIssue {
     message: string;
 }
 
+export interface CreateFeatureInstallationPlanRequest {
+    selectedModules: string[];
+}
+
+export interface FeatureInstallationPlan {
+    requestedModules: string[];
+    requiredModules: string[];
+    additionalModules: string[];
+    unknownModules: string[];
+    backendModules: string[];
+    frontendFeatures: string[];
+    flywayLocations: string[];
+    defaultPaths: string[];
+    modules: FeatureToggle[];
+}
+
 export interface DictionaryItem {
     id: string;
     dictionaryId: string;
