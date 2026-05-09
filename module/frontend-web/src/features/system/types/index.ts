@@ -15,6 +15,15 @@ export interface SystemConfig {
 export interface FeatureToggle {
     module: string;
     enabled: boolean;
+    displayName?: string;
+    displayNameEn?: string;
+    phase?: string;
+    priority?: string;
+    backendModule?: string;
+    frontendFeature?: string;
+    flywayLocation?: string;
+    defaultPath?: string;
+    dependencies?: string[];
 }
 
 export interface DictionaryItem {

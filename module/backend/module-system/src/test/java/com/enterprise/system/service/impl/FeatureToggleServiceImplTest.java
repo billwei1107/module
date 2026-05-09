@@ -37,4 +37,41 @@ class FeatureToggleServiceImplTest {
             assertThat(feature.getEnabled()).isTrue();
         });
     }
+
+    @Test
+    void getFeaturesShouldExposeReusableModuleCatalogMetadata() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("modules.payroll", "true")
+                .withProperty("modules.notification", "false");
+
+        FeatureToggleServiceImpl service = new FeatureToggleServiceImpl(environment);
+        List<FeatureToggleDTO> features = service.getFeatures();
+
+        assertThat(features).hasSize(17);
+        assertThat(features).allSatisfy(feature -> {
+            assertThat(feature.getDisplayName()).isNotBlank();
+            assertThat(feature.getDisplayNameEn()).isNotBlank();
+            assertThat(feature.getPhase()).isIn("CORE", "OPERATIONS", "EXTENSION", "ADVANCED");
+            assertThat(feature.getPriority()).matches("P[0-3]");
+            assertThat(feature.getBackendModule()).startsWith("module/backend/module-");
+            assertThat(feature.getFrontendFeature()).startsWith("module/frontend-web/src/features/");
+            assertThat(feature.getFlywayLocation()).startsWith("classpath:db/migration");
+            assertThat(feature.getDependencies()).isNotNull();
+        });
+        assertThat(features).anySatisfy(feature -> {
+            assertThat(feature.getModule()).isEqualTo("payroll");
+            assertThat(feature.getEnabled()).isTrue();
+            assertThat(feature.getDefaultPath()).isEqualTo("/payroll");
+            assertThat(feature.getDependencies()).containsExactly("auth", "organization", "attendance", "leave", "finance");
+        });
+        assertThat(features).anySatisfy(feature -> {
+            assertThat(feature.getModule()).isEqualTo("notification");
+            assertThat(feature.getEnabled()).isFalse();
+            assertThat(feature.getDefaultPath()).isNull();
+        });
+        assertThat(features).anySatisfy(feature -> {
+            assertThat(feature.getModule()).isEqualTo("auth");
+            assertThat(feature.getFlywayLocation()).isEqualTo("classpath:db/migration");
+        });
+    }
 }

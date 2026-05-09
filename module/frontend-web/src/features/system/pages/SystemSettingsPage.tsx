@@ -126,7 +126,7 @@ export const SystemSettingsPage = () => {
                     {features.map((feature) => (
                         <Chip
                             key={feature.module}
-                            label={`${feature.module}: ${feature.enabled ? 'ON' : 'OFF'}`}
+                            label={`${feature.displayName ?? feature.module} (${feature.priority ?? 'P?'})：${feature.enabled ? 'ON' : 'OFF'}`}
                             color={feature.enabled ? 'success' : 'default'}
                         />
                     ))}
