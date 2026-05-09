@@ -49,3 +49,11 @@
 **原因分析**: 臨時測試使用部分文字匹配，文件名稱也包含相同片段，導致 locator 不唯一。
 **Solution**: 改為 `getByText('policy', { exact: true })` 精確匹配標籤文字。修正後 `npx playwright test tmp-document-browser.spec.ts --reporter=line` 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-playwright-text-locator-strict-mode.md`
+
+## 2026-05-09 - Playwright 臨時 smoke test 指令與路由匹配問題
+
+### 問題: project 名稱、文字定位與 query URL mock pattern 不匹配
+**Issue**: `module-inventory` 前端 smoke test 初跑時依序遇到 `Project(s) "chromium" not found`、`getByText('庫存筆數：0')` strict mode violation，以及盤點 API mock 未匹配 query URL 導致頁面顯示 `盤點失敗 / Failed to process stock take`。
+**原因分析**: 此前端專案沒有 `playwright.config` project 名稱，不能指定 `--project=chromium`；庫存筆數文字被低庫存筆數部分匹配；`freeze` API 會帶 query params，臨時 route pattern 沒有包含尾端 wildcard。
+**Solution**: 改用 `npx playwright test tmp-inventory-browser.spec.ts`；文字定位改為 `getByText('庫存筆數：0', { exact: true })`；stock-take mock route 改成 `**/stock-takes/freeze**`、`**/count**`、`**/adjust**`。修正後 inventory smoke test 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-playwright-inventory-smoke-test-routing.md`
