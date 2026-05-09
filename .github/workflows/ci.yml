@@ -138,6 +138,11 @@ jobs:
           assert any(module["module"] == "payroll" for module in manifest["modules"])
           PY
 
+      - name: Validate Markdown catalog output
+        run: |
+          scripts/module-export.sh --all --format markdown > /tmp/module-catalog.md
+          diff -u docs/module-catalog.md /tmp/module-catalog.md
+
       - name: Validate config snippet output
         run: |
           scripts/module-export.sh --modules payroll --format config > /tmp/module-export-config.yml
@@ -182,7 +187,9 @@ jobs:
       - name: Validate module portability guide
         run: |
           test -f docs/module-portability-guide.md
+          test -f docs/module-catalog.md
           grep -q "scripts/module-export.sh --modules payroll --format json" docs/module-portability-guide.md
+          grep -q "scripts/module-export.sh --all --format markdown" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --format config" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --target /path/to/target-project --execute" docs/module-portability-guide.md
           grep -q "mvn -f module/backend/pom.xml test" docs/module-portability-guide.md

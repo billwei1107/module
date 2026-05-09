@@ -36,6 +36,7 @@ Usage:
   scripts/module-export.sh --modules payroll,leave
   scripts/module-export.sh --modules payroll --format json
   scripts/module-export.sh --modules payroll --format config
+  scripts/module-export.sh --all --format markdown
   scripts/module-export.sh --modules payroll --format rsync --target /path/to/project
   scripts/module-export.sh --modules payroll --target /path/to/project --execute
   scripts/module-export.sh --all
@@ -45,7 +46,7 @@ Options:
   --modules <list>   Comma or space separated module keys.
   --all              Select all reusable modules.
   --target <path>    Target project root for rsync commands or execution.
-  --format <format>  plan, json, config, or rsync. Default: plan.
+  --format <format>  plan, json, config, markdown, or rsync. Default: plan.
   --execute          Execute rsync copy. Requires --target.
   --list             Print known module keys.
   -h, --help         Show this help.
@@ -125,6 +126,14 @@ flyway_location_for() {
 
 source_key_for() {
   catalog_field_for "$1" 8 || true
+}
+
+phase_for() {
+  catalog_field_for "$1" 4 || true
+}
+
+priority_for() {
+  catalog_field_for "$1" 5 || true
 }
 
 append_unique() {
@@ -445,6 +454,43 @@ print_config_snippet() {
     fi
     printf '  %s: %s\n' "$module" "$enabled"
   done < <(known_modules)
+}
+
+print_markdown_catalog() {
+  local module
+  local dependencies
+  local default_path
+  local source_key
+
+  echo "# 模組清冊 / Module Catalog"
+  echo
+  echo "本文件由 \`module/backend/module-system/src/main/resources/module-catalog.tsv\` 生成，用於確認可移植模組的依賴、路由與來源位置。"
+  echo
+  echo "| Module | Name | Phase | Priority | Dependencies | Backend | Frontend | Flyway | Default route |"
+  echo "|---|---|---|---|---|---|---|---|---|"
+  for module in "${REQUIRED_MODULES[@]}"; do
+    dependencies="$(dependencies_for "$module")"
+    if [[ -z "$dependencies" ]]; then
+      dependencies="-"
+    else
+      dependencies="${dependencies// /, }"
+    fi
+    default_path="$(default_path_for "$module")"
+    if [[ -z "$default_path" ]]; then
+      default_path="-"
+    fi
+    source_key="$(source_key_for "$module")"
+    printf '| `%s` | %s | `%s` | `%s` | %s | `module/backend/module-%s` | `module/frontend-web/src/features/%s` | `%s` | `%s` |\n' \
+      "$module" \
+      "$(display_name_for "$module")" \
+      "$(phase_for "$module")" \
+      "$(priority_for "$module")" \
+      "$dependencies" \
+      "$source_key" \
+      "$source_key" \
+      "$(flyway_location_for "$module")" \
+      "$default_path"
+  done
 }
 
 print_backend_parent_pom() {
@@ -1049,7 +1095,7 @@ if [[ "${#REQUESTED_MODULES[@]}" -eq 0 ]]; then
 fi
 
 case "$FORMAT" in
-  plan|json|config|rsync)
+  plan|json|config|markdown|rsync)
     ;;
   *)
     echo "Unsupported format: $FORMAT" >&2
@@ -1068,6 +1114,8 @@ elif [[ "$FORMAT" == "json" ]]; then
   print_json_manifest
 elif [[ "$FORMAT" == "config" ]]; then
   print_config_snippet
+elif [[ "$FORMAT" == "markdown" ]]; then
+  print_markdown_catalog
 else
   print_plan
 fi

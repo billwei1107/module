@@ -50,7 +50,15 @@ JSON manifest 可給其他工具或 CI 讀取，主要欄位：
 - `copyPaths`
 - `modules`
 
-## 4. 產生 Spring Boot 設定片段
+## 4. 產生 Markdown 清冊
+
+```bash
+scripts/module-export.sh --all --format markdown > docs/module-catalog.md
+```
+
+`docs/module-catalog.md` 由 `module-catalog.tsv` 生成，列出每個模組的依賴、階段、優先級、前後端位置、Flyway location 與預設路由。CI 會檢查文件是否與 TSV 同步。
+
+## 5. 產生 Spring Boot 設定片段
 
 ```bash
 scripts/module-export.sh --modules payroll --format config > /tmp/module-export-config.yml
@@ -63,7 +71,7 @@ scripts/module-export.sh --modules payroll --format config > /tmp/module-export-
 
 注意：輸出會列出完整 17 個模組開關。所選模組與遞迴依賴會是 `true`，其餘模組會是 `false`，避免 Spring profile 合併時沿用 base 預設造成業態組合失真。
 
-## 5. 產生 rsync 指令
+## 6. 產生 rsync 指令
 
 ```bash
 scripts/module-export.sh --modules payroll --format rsync --target /path/to/target-project
@@ -77,7 +85,7 @@ scripts/module-export.sh --modules payroll --format rsync --target /path/to/targ
 - `module/frontend-web/src/shared`
 - `module/frontend-web/package.json`
 
-## 6. 執行複製
+## 7. 執行複製
 
 ```bash
 scripts/module-export.sh --modules payroll --target /path/to/target-project --execute
@@ -102,7 +110,7 @@ scripts/module-export.sh --modules payroll --target /path/to/target-project --ex
 - `module/frontend-web/src/App.tsx`：只匯入已匯出 feature 的頁面
 - `module/frontend-web/src/shared/navigation/moduleNavigation.ts`：只保留已匯出模組的導覽資料
 
-## 7. 導入後檢查
+## 8. 導入後檢查
 
 在目標專案中至少執行：
 
@@ -114,7 +122,7 @@ docker compose -f module/docker/local/docker-compose.yml config
 
 若目標專案沒有相同 frontend/backend 目錄結構，先使用 `--format json` 或 `--format rsync` 審核，再手動調整搬移路徑。
 
-## 8. 維護注意事項
+## 9. 維護注意事項
 
 - 修復通用模組 bug 後，必須回寫母體倉庫並 commit/push。
 - 新增通用功能時，先評估是否應抽回母體，而不是只留在客製專案。
