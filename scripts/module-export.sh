@@ -34,6 +34,7 @@ usage() {
 Usage:
   scripts/module-export.sh --modules payroll,leave
   scripts/module-export.sh --modules payroll --format json
+  scripts/module-export.sh --modules payroll --format config
   scripts/module-export.sh --modules payroll --format rsync --target /path/to/project
   scripts/module-export.sh --modules payroll --target /path/to/project --execute
   scripts/module-export.sh --all
@@ -43,7 +44,7 @@ Options:
   --modules <list>   Comma or space separated module keys.
   --all              Select all reusable modules.
   --target <path>    Target project root for rsync commands or execution.
-  --format <format>  plan, json, or rsync. Default: plan.
+  --format <format>  plan, json, config, or rsync. Default: plan.
   --execute          Execute rsync copy. Requires --target.
   --list             Print known module keys.
   -h, --help         Show this help.
@@ -444,6 +445,48 @@ print_json_manifest() {
   printf '}\n'
 }
 
+print_comma_list() {
+  local first="true"
+  local value
+
+  for value in "$@"; do
+    if [[ "$first" == "false" ]]; then
+      printf ','
+    fi
+    printf '%s' "$value"
+    first="false"
+  done
+}
+
+print_config_snippet() {
+  local module
+  local enabled
+
+  echo "# Module export configuration snippet"
+  echo "# Requested modules: $(print_comma_list "${REQUESTED_MODULES[@]}")"
+  echo "# Required modules: $(print_comma_list "${REQUIRED_MODULES[@]}")"
+  if [[ "${#ADDITIONAL_MODULES[@]}" -gt 0 ]]; then
+    echo "# Additional required modules: $(print_comma_list "${ADDITIONAL_MODULES[@]}")"
+  fi
+  if [[ "${#UNKNOWN_MODULES[@]}" -gt 0 ]]; then
+    echo "# Unknown modules ignored: $(print_comma_list "${UNKNOWN_MODULES[@]}")"
+  fi
+  echo
+  echo "spring:"
+  echo "  flyway:"
+  echo "    locations: >-"
+  echo "      $(print_comma_list "${FLYWAY_LOCATIONS[@]}")"
+  echo
+  echo "modules:"
+  while IFS= read -r module; do
+    enabled="false"
+    if array_contains "$module" "${REQUIRED_MODULES[@]}"; then
+      enabled="true"
+    fi
+    printf '  %s: %s\n' "$module" "$enabled"
+  done < <(known_modules)
+}
+
 copy_paths() {
   printf '%s\n' "${COPY_PATHS[@]}"
 }
@@ -551,7 +594,7 @@ if [[ "${#REQUESTED_MODULES[@]}" -eq 0 ]]; then
 fi
 
 case "$FORMAT" in
-  plan|json|rsync)
+  plan|json|config|rsync)
     ;;
   *)
     echo "Unsupported format: $FORMAT" >&2
@@ -568,6 +611,8 @@ elif [[ "$FORMAT" == "rsync" ]]; then
   print_rsync_commands
 elif [[ "$FORMAT" == "json" ]]; then
   print_json_manifest
+elif [[ "$FORMAT" == "config" ]]; then
+  print_config_snippet
 else
   print_plan
 fi

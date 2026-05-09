@@ -107,6 +107,14 @@ jobs:
           assert any(module["module"] == "payroll" for module in manifest["modules"])
           PY
 
+      - name: Validate config snippet output
+        run: |
+          scripts/module-export.sh --modules payroll --format config > /tmp/module-export-config.yml
+          grep -q "classpath:db/migration/payroll" /tmp/module-export-config.yml
+          grep -q "payroll: true" /tmp/module-export-config.yml
+          grep -q "leave: true" /tmp/module-export-config.yml
+          grep -q "project: false" /tmp/module-export-config.yml
+
       - name: Validate rsync command output
         run: |
           scripts/module-export.sh --modules CRM,unknown-module --format rsync --target /tmp/module-target > /tmp/module-export-rsync.txt
