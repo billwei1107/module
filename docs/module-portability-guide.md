@@ -143,7 +143,26 @@ scripts/module-verify-import.sh --target /path/to/target-project
 
 若目標專案沒有相同 frontend/backend 目錄結構，先使用 `--format json` 或 `--format rsync` 審核，再手動調整搬移路徑。
 
-## 9. 維護注意事項
+## 9. 升級差異比對
+
+既有專案升級前，先保存目前 manifest，再與新匯出的 manifest 比對：
+
+```bash
+scripts/module-manifest-diff.sh \
+  --from /path/to/current/module/module-bundle-manifest.json \
+  --to /tmp/new-export/module/module-bundle-manifest.json
+```
+
+若要給 CI 或其他工具解析：
+
+```bash
+scripts/module-manifest-diff.sh \
+  --from /path/to/current/module/module-bundle-manifest.json \
+  --to /tmp/new-export/module/module-bundle-manifest.json \
+  --format json
+```
+
+## 10. 維護注意事項
 
 - 修復通用模組 bug 後，必須回寫母體倉庫並 commit/push。
 - 新增通用功能時，先評估是否應抽回母體，而不是只留在客製專案。

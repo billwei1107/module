@@ -82,7 +82,9 @@ cp module/module-bundle-manifest.json /tmp/module-bundle-manifest.before.json
 
 ```bash
 scripts/module-export.sh --modules payroll --target /tmp/module-upgrade-check --execute --require-clean
-diff -u /tmp/module-bundle-manifest.before.json /tmp/module-upgrade-check/module/module-bundle-manifest.json
+scripts/module-manifest-diff.sh \
+  --from /tmp/module-bundle-manifest.before.json \
+  --to /tmp/module-upgrade-check/module/module-bundle-manifest.json
 ```
 
 確認模組依賴、Flyway locations、前端 feature 路徑與支援檔符合預期後，再匯入正式目標專案並跑第 3 節驗證。

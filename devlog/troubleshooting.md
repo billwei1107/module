@@ -166,3 +166,11 @@
 **原因分析**: `git diff` 與 `git diff --cached` 不會偵測未追蹤檔案；正式交付時若有未追蹤但實際被手動參考的檔案，manifest 仍可能標成乾淨。匯出清單早期聚焦 backend/frontend build，漏掉 Docker local 設定與一鍵驗收入口。
 **Solution**: 將 dirty 判斷改為 `git status --porcelain --untracked-files=all`，新增 `scripts/module-export.sh --require-clean` 讓正式匯出遇到未提交或未追蹤變更時直接失敗。新增 `scripts/module-verify-import.sh`，驗證 manifest、`source.dirty`、後端 Maven、前端 `npm audit --audit-level=high`/build，以及 Docker Compose config。`--execute` support paths 補入 `module/docker/local`。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-portable-bundle-clean-export-guard.md`
+
+## 2026-05-09 - portable manifest 升級只能做原始 diff
+
+### 問題: `diff -u` 難以判斷模組升級風險
+**Issue**: `docs/module-release-guide.md` 原本建議使用 `diff -u` 比對 `module-bundle-manifest.json`，但原始 JSON diff 不容易快速看出哪些模組、Flyway locations、前端 feature 或後端 module 被新增/移除。
+**原因分析**: portable manifest 是機器可讀格式，直接用文字 diff 會受到欄位排序與 JSON 結構影響，審核者需要手動解讀清單變化，升級既有專案時容易漏看資料庫 migration 或依賴模組變更。
+**Solution**: 新增 `scripts/module-manifest-diff.sh`，讀取兩份 manifest 後輸出結構化差異，包含 requested/required/additional modules、backendModules、frontendFeatures、flywayLocations、defaultPaths、supportPaths、copyPaths 的 added/removed。支援 `--format json` 給 CI 或其他工具使用。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-portable-manifest-upgrade-diff.md`

@@ -99,6 +99,7 @@ jobs:
       - name: Validate script syntax
         run: |
           bash -n scripts/module-export.sh
+          bash -n scripts/module-manifest-diff.sh
           bash -n scripts/module-verify-import.sh
 
       - name: Validate module catalog resource
@@ -199,6 +200,26 @@ jobs:
           assert manifest["source"]["shortCommit"]
           PY
 
+      - name: Validate manifest diff output
+        run: |
+          scripts/module-export.sh --modules crm --format json > /tmp/module-export-crm.json
+          scripts/module-export.sh --modules payroll --format json > /tmp/module-export-payroll.json
+          scripts/module-manifest-diff.sh --from /tmp/module-export-crm.json --to /tmp/module-export-payroll.json > /tmp/module-manifest-diff.txt
+          grep -q "requiredModules:" /tmp/module-manifest-diff.txt
+          grep -q "module/backend/module-payroll" /tmp/module-manifest-diff.txt
+          scripts/module-manifest-diff.sh --from /tmp/module-export-crm.json --to /tmp/module-export-crm.json > /tmp/module-manifest-no-change.txt
+          grep -q "No module manifest changes." /tmp/module-manifest-no-change.txt
+          scripts/module-manifest-diff.sh --from /tmp/module-export-crm.json --to /tmp/module-export-payroll.json --format json > /tmp/module-manifest-diff.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          diff = json.loads(Path("/tmp/module-manifest-diff.json").read_text())
+          assert diff["schemaVersion"] == "1.0"
+          assert diff["hasChanges"] is True
+          assert "payroll" in diff["changes"]["requiredModules"]["added"]
+          PY
+
       - name: Validate portable import builds
         run: |
           for module in crm payroll; do
@@ -226,12 +247,14 @@ jobs:
           grep -q "scripts/module-export.sh --modules payroll --format json" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --all --format markdown" docs/module-portability-guide.md
           grep -q "module/module-bundle-manifest.json" docs/module-portability-guide.md
+          grep -q "scripts/module-manifest-diff.sh" docs/module-portability-guide.md
           grep -q "scripts/module-verify-import.sh --target" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --format config" docs/module-portability-guide.md
           grep -q "scripts/module-export.sh --modules payroll --target /path/to/target-project --execute" docs/module-portability-guide.md
           grep -q "mvn -f module/backend/pom.xml test" docs/module-portability-guide.md
           grep -q "npm audit --audit-level=high" docs/module-portability-guide.md
           grep -q "module-verify-import.sh" docs/module-release-guide.md
+          grep -q "module-manifest-diff.sh" docs/module-release-guide.md
           grep -q "module-vYYYY.MM.DD.N" docs/module-release-guide.md
           grep -q "source.shortCommit" docs/module-release-guide.md
           grep -q "module-bundle-manifest.json" CHANGELOG.md
