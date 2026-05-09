@@ -127,3 +127,11 @@
 **Issue**: GitHub Actions 首次 CI run 顯示 annotation：`Node.js 20 actions are deprecated`，並提示 2026-06-02 後 runner 會預設切到 Node 24。
 **原因分析**: 初版 workflow 使用 `actions/checkout@v4`、`actions/setup-node@v4`、`actions/setup-java@v4`，這些版本仍可能執行在 Node 20 action runtime。雖然當下 job 可通過，但會留下短期升級風險。
 **Solution**: 透過遠端 tag 確認官方 actions 已提供新版後，升級為 `actions/checkout@v6`、`actions/setup-node@v6`、`actions/setup-java@v5`，重新推送觸發 CI。
+
+## 2026-05-09 - 模組清冊 Flyway location 測試誤判 auth 根目錄 migration
+
+### 問題: `classpath:db/migration` 未符合測試中的 slash 前綴
+**Issue**: 新增模組清冊 metadata 後，`mvn test -pl module-system -am` 失敗，測試錯誤為 `Expecting actual: "classpath:db/migration" to start with: "classpath:db/migration/"`。
+**原因分析**: 多數業務模組的 migration 位於 `db/migration/[module]`，但 `module-auth` 的 migration 位於根 `db/migration`，這是現有 Flyway locations 的正確配置。測試條件過度假設每個模組都必定有子目錄。
+**Solution**: 將清冊中的 Flyway location 改為每個模組明確宣告，並把測試條件放寬為 `classpath:db/migration` 前綴，同時保留 `auth` 必須等於 `classpath:db/migration` 的精準斷言。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-module-catalog-auth-flyway-location.md`
