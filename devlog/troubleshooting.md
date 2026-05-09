@@ -97,3 +97,18 @@
 **原因分析**: 臨時測試使用 `page.route('**/api/**')` 作為後端 API fallback mock，但 Vite 會載入 `/src/features/system/api/systemApi.ts`，路徑中也包含 `/api/`，因此 source module 被 Playwright route 攔截並回傳 JSON。
 **Solution**: 將 mock pattern 限縮為 `**/api/v1/**` 與 `**/api/api/v1/**`，避免攔截 `/src/**` source module；並將 feature endpoint 的 route 註冊在 fallback 後面，確保較精準的 mock 優先處理。修正後 Playwright browser script 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-playwright-api-mock-overmatches-vite-source.md`
+
+## 2026-05-09 - Local Docker Compose 缺少本地 env 與插值預設
+
+### 問題: `env/local/.env` 不存在且 compose 插值變數未設定
+**Issue**: 執行 `docker compose -f module/docker/local/docker-compose.yml config` 時，出現 `env file .../module/env/local/.env not found`，並同時警告 `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `POSTGRES_PORT`, `REDIS_PASSWORD`, `REDIS_PORT` 等變數未設定。
+**原因分析**: Compose 的 `env_file` 用於注入 container runtime environment，但不保證可作為 compose YAML 插值來源；fresh clone 時 `module/env/local/.env` 不會存在，且原本 YAML 沒有為插值提供 fallback。Redis 與 backend 的預設密碼也未明確對齊，容易造成 local 啟動後連線失敗。
+**Solution**: 將 `env_file` 改為 optional，並在 compose YAML 內替 DB、Redis、JWT 與服務 port 補上本地預設值；backend 在 compose network 內固定使用 `postgres:5432` 與 `redis:6379`。新增 `module/env/local/.env.example` 作為本地覆寫範本，並加入 top-level `name: ${COMPOSE_PROJECT_NAME:-module}` 固定預設 compose project name。修正後 `docker compose -f module/docker/local/docker-compose.yml config` 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-09-docker-compose-local-env-defaults.md`
+
+## 2026-05-09 - Docker daemon 未啟動導致 compose build 無法執行
+
+### 問題: 無法連線到 OrbStack Docker socket
+**Issue**: 執行 `docker compose -f module/docker/local/docker-compose.yml build backend frontend` 時出現 `Cannot connect to the Docker daemon at unix:///Users/wei/.orbstack/run/docker.sock. Is the docker daemon running?`。
+**原因分析**: 本機 Docker daemon/OrbStack 未啟動，CLI 無法連線到 Docker socket，因此不能建立實際 image。
+**Solution**: 本輪先以 Dockerfile 等價步驟驗證建構鏈：`mvn -f module/backend/pom.xml clean package -DskipTests` 與 `npm run build` 均通過；待 Docker daemon/OrbStack 啟動後，需再執行完整 `docker compose -f module/docker/local/docker-compose.yml build backend frontend` 與 `docker compose -f module/docker/local/docker-compose.yml up`。
