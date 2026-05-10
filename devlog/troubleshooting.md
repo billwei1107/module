@@ -182,3 +182,11 @@
 **原因分析**: macOS/BSD `mktemp` 要求 template 的 `X` 佔位符位於尾端；`module-catalog.XXXXXX.md` 在 `XXXXXX` 後仍有副檔名，因此無法正確產生唯一暫存檔。
 **Solution**: 將 release check 的 catalog 暫存 template 改為 `module-catalog.XXXXXX`，移除尾端副檔名，讓 macOS/BSD 與 Linux GNU `mktemp` 都能產生暫存檔。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-09-macos-mktemp-template-suffix.md`
+
+## 2026-05-10 - Spring Boot health endpoint 403 / 500
+
+### 問題: 導入專案無法以 `/actuator/health` 驗證 backend 存活
+**Issue**: POS 專案 Docker backend 啟動後，`curl http://localhost:38080/actuator/health` 先回傳 403；SecurityConfig 放行後又回傳 `No static resource actuator/health`。
+**原因分析**: 共用安全設定未將 health endpoint 納入 permitAll，導致未登入請求被 Spring Security 擋下；app 模組也缺少 `spring-boot-starter-actuator`，因此即使路徑放行，實際端點仍不存在。
+**Solution**: 在 `module-common` 的 `SecurityConfig` 放行 `/actuator/health` 與 `/actuator/health/**`；在 `app/pom.xml` 加入 `spring-boot-starter-actuator`。同步驗證 `mvn -pl module-common -am test`、`mvn -pl app -am test -DskipTests`、frontend lint/build 均通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-10-spring-boot-actuator-health-403-500.md`

@@ -27,7 +27,7 @@ export const NotificationBell: React.FC = () => {
     }, []);
 
     const handleNewNotification = useCallback((noti: NotificationDTO) => {
-        // Push incoming alert to the top if user keeps dropdown open
+            // Push incoming alert to the top if user keeps dropdown open
         setNotifications(prev => [noti, ...prev].slice(0, 10));
     }, []);
 
@@ -56,7 +56,7 @@ export const NotificationBell: React.FC = () => {
 
     return (
         <>
-            <IconButton color="inherit" onClick={handleClick} aria-describedby={id} aria-label="通知中心">
+            <IconButton color="inherit" onClick={handleClick} aria-describedby={id}>
                 <Badge badgeContent={unreadCount} color="error">
                     <NotificationsIcon />
                 </Badge>

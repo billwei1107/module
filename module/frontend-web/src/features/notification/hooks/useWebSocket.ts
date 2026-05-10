@@ -4,28 +4,21 @@ import SockJS from 'sockjs-client';
 import { useAuthStore } from '../../../shared/store/authStore';
 import type { NotificationDTO } from '../types';
 
-/**
- * @file useWebSocket.ts
- * @description 通知 WebSocket Hook / Notification WebSocket hook
- * @description_en Connects the authenticated user to notification streams
- * @description_zh 將已登入使用者連接至通知推播串流
- */
-
 interface UseWebSocketOptions {
     onUnreadCountUpdate?: (count: number) => void;
     onNewNotification?: (notification: NotificationDTO) => void;
 }
 
-export const useWebSocket = (options: UseWebSocketOptions): void => {
+export const useWebSocket = (options: UseWebSocketOptions) => {
     const { user, token } = useAuthStore();
-    const { onNewNotification, onUnreadCountUpdate } = options;
+    const { onUnreadCountUpdate, onNewNotification } = options;
     const clientRef = useRef<Client | null>(null);
 
     useEffect(() => {
         if (!user || !user.id || !token) return;
 
         // 連接後端配置的 ws 端點 (降級使用 SockJS 以提升相容性)
-        const WS_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/ws/notifications`;
+        const WS_URL = `${import.meta.env.VITE_WS_BASE_URL || ''}/ws/notifications`;
 
         const client = new Client({
             webSocketFactory: () => new SockJS(WS_URL),
@@ -67,6 +60,5 @@ export const useWebSocket = (options: UseWebSocketOptions): void => {
                 clientRef.current.deactivate();
             }
         };
-    }, [onNewNotification, onUnreadCountUpdate, token, user]);
-
+    }, [user, token, onUnreadCountUpdate, onNewNotification]);
 };
