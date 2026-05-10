@@ -190,3 +190,11 @@
 **原因分析**: 共用安全設定未將 health endpoint 納入 permitAll，導致未登入請求被 Spring Security 擋下；app 模組也缺少 `spring-boot-starter-actuator`，因此即使路徑放行，實際端點仍不存在。
 **Solution**: 在 `module-common` 的 `SecurityConfig` 放行 `/actuator/health` 與 `/actuator/health/**`；在 `app/pom.xml` 加入 `spring-boot-starter-actuator`。同步驗證 `mvn -pl module-common -am test`、`mvn -pl app -am test -DskipTests`、frontend lint/build 均通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-10-spring-boot-actuator-health-403-500.md`
+
+## 2026-05-10 - 前端 ApiResponse success mismatch
+
+### 問題: API 200 但 UI 判定沒有成功資料
+**Issue**: POS 收銀台接入商品 API 後，瀏覽器 network 顯示 `/api/v1/pos/products` 回傳 200 且有資料，但 UI 顯示「目前沒有可銷售商品」。
+**原因分析**: 後端標準回應是 `code/message/data/timestamp`，前端共用型別與頁面邏輯使用 `success` 判斷；同時部分 API 層在 axios interceptor 已回傳 body 後又 `.then(res => res.data)`，導致資料層不一致。
+**Solution**: 在 `axiosInstance` response interceptor 對含 `code` 的回應補上 `success`，並修正 `authApi` 取 `ApiResponse<LoginResponse>.data`。同步驗證母體 frontend lint/build 通過。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-10-frontend-api-response-success-mismatch.md`

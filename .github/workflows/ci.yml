@@ -254,7 +254,7 @@ jobs:
           test -f ai-handoff.md
           test -f ai-module-planning.md
           test -f ai-module-change-protocol.md
-          grep -q "module-v2026.05.10.3" ai-module-planning.md
+          grep -q "module-v2026.05.10.4" ai-module-planning.md
           grep -q "reference/模塊化組件/ai-handoff.md" ai-handoff.md
           grep -q "module-release-check.sh" ai-handoff.md
           grep -q "/Users/wei/Desktop/code/模塊化組件" ai-handoff.md
