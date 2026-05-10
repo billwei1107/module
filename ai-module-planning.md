@@ -43,7 +43,7 @@ AI 應把 `reference/模塊化組件/` 視為模組母體與規劃參考，不�
 - 先根據需求選出候選模組，再用 `scripts/module-export.sh` 展開依賴。
 - 前端 UI 可依新專案設計重做；API contract、DTO、module key、Flyway migration、feature toggle 語意不可任意改。
 - 目標專案若已有 `module/module-bundle-manifest.json`，新增模組前必須先讀取既有 manifest。
-- 正式導入基線應使用最新 release tag；目前基線為 `module-v2026.05.10.2`。
+- 正式導入基線應使用最新 release tag；目前基線為 `module-v2026.05.10.3`。
 
 ## 4. 模組地圖
 
