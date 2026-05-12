@@ -1,14 +1,10 @@
 package com.enterprise.report.service.impl;
 
-import com.enterprise.attendance.repository.AttendanceRecordRepository;
 import com.enterprise.common.exception.BusinessException;
-import com.enterprise.finance.repository.InvoiceRepository;
-import com.enterprise.payroll.repository.PayrollRecordRepository;
 import com.enterprise.report.dto.CreateReportDefinitionRequest;
 import com.enterprise.report.entity.ReportDefinition;
 import com.enterprise.report.repository.*;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
@@ -69,10 +65,10 @@ class ReportServiceImplTest {
         when(definitionRepository.save(any(ReportDefinition.class))).thenAnswer(invocation -> invocation.getArgument(0));
         ReportServiceImpl service = service(definitionRepository, mock(JdbcTemplate.class));
         CreateReportDefinitionRequest request = new CreateReportDefinitionRequest();
-        request.setName("薪資統計");
-        request.setDataSourceSql("select employee_id, net_pay from pay_payroll_records");
+        request.setName("應收統計");
+        request.setDataSourceSql("select invoice_no, amount from fin_invoices");
 
-        assertThat(service.createDefinition(request).getName()).isEqualTo("薪資統計");
+        assertThat(service.createDefinition(request).getName()).isEqualTo("應收統計");
         verify(definitionRepository).save(any(ReportDefinition.class));
     }
 
@@ -84,9 +80,6 @@ class ReportServiceImplTest {
                 mock(DashboardConfigRepository.class),
                 mock(WidgetRepository.class),
                 jdbcTemplate,
-                new ReportSqlGuard(),
-                mock(ObjectProvider.class),
-                mock(ObjectProvider.class),
-                mock(ObjectProvider.class));
+                new ReportSqlGuard());
     }
 }

@@ -1,13 +1,7 @@
 package com.enterprise.report.service.impl;
 
-import com.enterprise.attendance.entity.AttendanceRecord;
-import com.enterprise.attendance.repository.AttendanceRecordRepository;
 import com.enterprise.common.annotation.Auditable;
 import com.enterprise.common.exception.BusinessException;
-import com.enterprise.finance.entity.Invoice;
-import com.enterprise.finance.repository.InvoiceRepository;
-import com.enterprise.payroll.entity.PayrollRecord;
-import com.enterprise.payroll.repository.PayrollRecordRepository;
 import com.enterprise.report.dto.*;
 import com.enterprise.report.entity.DashboardConfig;
 import com.enterprise.report.entity.ReportDefinition;
@@ -16,7 +10,6 @@ import com.enterprise.report.entity.Widget;
 import com.enterprise.report.repository.*;
 import com.enterprise.report.service.ReportService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +36,6 @@ public class ReportServiceImpl implements ReportService {
     private final WidgetRepository widgetRepository;
     private final JdbcTemplate jdbcTemplate;
     private final ReportSqlGuard sqlGuard;
-    private final ObjectProvider<AttendanceRecordRepository> attendanceRecordRepositoryProvider;
-    private final ObjectProvider<InvoiceRepository> invoiceRepositoryProvider;
-    private final ObjectProvider<PayrollRecordRepository> payrollRecordRepositoryProvider;
 
     @Override
     @Transactional
@@ -137,29 +127,11 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public BusinessSummaryDTO getBusinessSummary() {
-        List<AttendanceRecord> attendanceRecords = optionalList(attendanceRecordRepositoryProvider.getIfAvailable(), AttendanceRecordRepository::findAll)
-                .stream().filter(record -> record.getDeletedAt() == null).toList();
-        List<Invoice> openInvoices = optionalList(invoiceRepositoryProvider.getIfAvailable(), InvoiceRepository::findAll)
-                .stream().filter(invoice -> invoice.getDeletedAt() == null && invoice.getStatus() != Invoice.InvoiceStatus.PAID).toList();
-        List<PayrollRecord> payrollRecords = optionalList(payrollRecordRepositoryProvider.getIfAvailable(), PayrollRecordRepository::findAll)
-                .stream().filter(record -> record.getDeletedAt() == null).toList();
-
-        Integer overtimeMinutes = attendanceRecords.stream()
-                .map(AttendanceRecord::getOvertimeMinutes)
-                .filter(Objects::nonNull)
-                .reduce(0, Integer::sum);
-        BigDecimal openInvoiceAmount = openInvoices.stream()
-                .map(invoice -> invoice.getAmount().subtract(invoice.getPaidAmount()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal payrollNetPay = payrollRecords.stream()
-                .map(PayrollRecord::getNetPay)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
         return BusinessSummaryDTO.builder()
-                .attendanceRecords((long) attendanceRecords.size())
-                .overtimeMinutes(overtimeMinutes)
-                .openInvoiceAmount(openInvoiceAmount)
-                .payrollNetPay(payrollNetPay)
+                .attendanceRecords(0L)
+                .overtimeMinutes(0)
+                .openInvoiceAmount(BigDecimal.ZERO)
+                .payrollNetPay(BigDecimal.ZERO)
                 .build();
     }
 
@@ -201,10 +173,6 @@ public class ReportServiceImpl implements ReportService {
 
     private String defaultIfBlank(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value.trim();
-    }
-
-    private <T, R> List<R> optionalList(T repository, java.util.function.Function<T, List<R>> loader) {
-        return repository == null ? List.of() : loader.apply(repository);
     }
 
     private ReportDefinitionDTO toDTO(ReportDefinition definition) {
