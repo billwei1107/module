@@ -31,3 +31,4 @@ All notable changes to the enterprise modular component repository are recorded 
 - Fixed portable frontend exports by including `module/frontend-web/index.html` and `module/frontend-web/public`.
 - Updated frontend lockfile dependencies to resolve current `npm audit --audit-level=high` findings for `axios`, `follow-redirects`, and `postcss`.
 - Fixed source dirty detection to include untracked files, preventing formal manifests from hiding unreproducible local files.
+- Removed nonportable `module-report` hard dependencies on attendance, finance, and payroll modules so report-only portable bundles can compile cleanly.

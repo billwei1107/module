@@ -198,3 +198,11 @@
 **原因分析**: 後端標準回應是 `code/message/data/timestamp`，前端共用型別與頁面邏輯使用 `success` 判斷；同時部分 API 層在 axios interceptor 已回傳 body 後又 `.then(res => res.data)`，導致資料層不一致。
 **Solution**: 在 `axiosInstance` response interceptor 對含 `code` 的回應補上 `success`，並修正 `authApi` 取 `ApiResponse<LoginResponse>.data`。同步驗證母體 frontend lint/build 通過。此問題已同步寫入 Obsidian raw：
 - `~/Desktop/obsidian/raw/coding/errors/2026-05-10-frontend-api-response-success-mismatch.md`
+
+## 2026-05-12 - module-report 不可攜硬依賴
+
+### 問題: report portable bundle 會編譯找不到未導入模組
+**Issue**: 正式導入財務會計模組後，`module-report` 編譯找不到未導入的 attendance、payroll 類別；移除後 release check 又發現 finance 硬依賴。
+**原因分析**: `module-report` 的 POM 與 `ReportServiceImpl` 直接依賴 `module-attendance`、`module-finance`、`module-payroll` 的 entity/repository。portable bundle 支援按專案選擇模組，未選模組不會被匯出，因此 report 模組不能用 Java import 或 Maven dependency 硬綁其他業務模組。
+**Solution**: 移除 `module-report/pom.xml` 對 attendance、finance、payroll 的硬依賴；移除跨模組 repository provider；`getBusinessSummary()` 回傳中性值以保留 API 形狀；更新 `ReportServiceImplTest`。修正後通過 `scripts/module-release-check.sh --modules report`，並發布 `module-v2026.05.12.1`。此問題已同步寫入 Obsidian raw：
+- `~/Desktop/obsidian/raw/coding/errors/2026-05-12-module-report-nonportable-dependencies.md`
